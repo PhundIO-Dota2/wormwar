@@ -1,0 +1,13 @@
+"AddonInfo"
+{
+	"addonSteamAppID"				"816"
+	"addontitle"					"Worm War"
+	"addonversion"					"0.1"
+	"addontagline"					"Worm War"
+	"addonauthor"					"Myll"
+	"addonSteamGroupName"			""
+	"addonauthorSteamID"			""
+	"addonContent_Campaign"			"0"
+	"addonURL0"						""
+	"addonDescription"				"Worm War"
+}

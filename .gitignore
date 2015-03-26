@@ -1,11 +1,16 @@
-# Build and Release Folders
-bin/
-bin-debug/
-bin-release/
+#############
+#  DOTA 2
+#############
 
-# Other files and folders
-.settings/
-
-# Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
-# should NOT be excluded as they contain compiler settings and other important
-# information for Eclipse / Flash Builder.
+*.vpk
+*.vpcf_c
+*.vsnd_c
+*.vsndevts_c
+*.vmat_c
+*.vtex_c
+# model shiz
+*.vmesh_c
+*.vanim_c
+*.vagrp_c
+*.vmdl_c
+*.bin

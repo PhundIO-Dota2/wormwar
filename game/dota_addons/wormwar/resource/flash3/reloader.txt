@@ -1,0 +1,13 @@
+"CustomUI"
+{
+    "2"
+    {
+        "File" "CustomUI"
+        "Depth" "50"
+    }
+    "3"
+    {
+        "File" "StatsCollection"
+        "Depth" "1"
+    }
+}
