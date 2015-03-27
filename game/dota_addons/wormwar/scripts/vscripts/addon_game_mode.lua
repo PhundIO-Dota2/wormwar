@@ -16,11 +16,10 @@ function Precache( context )
 	-- It it likely that precaching a single particle system will precache all of its children, but this may not be guaranteed
 	PrecacheResource("particle_folder", "particles/spikes", context)
 	PrecacheResource("particle_folder", "particles/infest_icon", context)
+	PrecacheResource("particle_folder", "particles/golden_sheep", context)
 	--PrecacheResource("particle_folder", "particles/econ/events/killbanners", context)
-	--particles/econ/events/killbanners
-
+	PrecacheResource("particle", "particles/units/heroes/hero_zuus/zuus_arc_lightning.vpcf", context)
 	PrecacheResource("particle", "particles/items_fx/blademail.vpcf", context)
-	PrecacheResource("particle", "particles/custom/courier_international_2013_se.vpcf", context)
 	PrecacheResource("particle", "particles/units/heroes/hero_bloodseeker/bloodseeker_rupture.vpcf", context)
 	PrecacheResource("particle", "particles/units/heroes/hero_huskar_temp/huskar_lifebreak_bloodyend.vpcf", context)
 	PrecacheResource("particle", "particles/units/heroes/hero_bristleback/bristleback_loadout.vpcf", context)
@@ -72,6 +71,7 @@ function Precache( context )
 	PrecacheResource("soundfile", "soundevents/game_sounds_heroes/game_sounds_treant.vsndevts", context)
 	PrecacheResource("soundfile", "soundevents/game_sounds_heroes/game_sounds_pugna.vsndevts", context)
 	PrecacheResource("soundfile", "soundevents/game_sounds_heroes/game_sounds_invoker.vsndevts", context)
+	PrecacheResource("soundfile", "soundevents/game_sounds_heroes/game_sounds_zuus.vsndevts", context)
 	PrecacheResource("soundfile", "soundevents/game_sounds_creeps.vsndevts", context)
 	PrecacheResource("soundfile", "soundevents/soundevents_custom.vsndevts", context)
 	--Hero_Pugna.LifeDrain.Loop

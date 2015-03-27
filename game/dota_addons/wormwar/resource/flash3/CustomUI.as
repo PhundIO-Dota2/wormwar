@@ -31,13 +31,24 @@
 			trace("[CustomUI] OnLoaded");
 			
 			this.gameAPI.SubscribeToGameEvent("show_main_ability", showMainAbility);
+			this.gameAPI.SubscribeToGameEvent("show_banner", showBanner);
 
 			this.addChild(holder);
 			
+			var oldChatSay:Function = globals.Loader_hud_chat.movieClip.gameAPI.ChatSay;
+			globals.Loader_hud_chat.movieClip.gameAPI.ChatSay = function(obj:Object, bool:Boolean){
+				var type:int = globals.Loader_hud_chat.movieClip.m_nLastMessageMode
+				if (bool)
+					type = 4
+				
+				gameAPI.SendServerCommand( "player_say " + type + " " + obj.toString());
+				oldChatSay(obj, bool);
+			};
+
 			//let the client rescale the UI
 			Globals.instance.resizeManager.AddListener(this);
 			
-			overrideKillBanners();
+			//overrideKillBanners();
 
 			//pass the gameAPI on to the modules
 			this.scoreBoard.setup(this.gameAPI, this.globals);
@@ -47,8 +58,21 @@
 			trace("[CustomUI] OnLoaded finished!5");
 		}
 		
-		public function overrideKillBanners() : void {
-	
+		public function showBanner() : void {
+			var obj = globals.Loader_hud_chat.movieClip.headerFirstBlood0;
+			trace("showBanner")
+			Util.PrintTable(obj)
+			obj.headerIcon.visible = true;
+			obj.symbolTextField.visible = true;
+			/*var oldChatSay:Function = globals.Loader_hud_chat.movieClip.gameAPI.ChatSay;
+			globals.Loader_hud_chat.movieClip.gameAPI.ChatSay = function(obj:Object, bool:Boolean){
+				var type:int = globals.Loader_hud_chat.movieClip.m_nLastMessageMode
+				if (bool)
+					type = 4
+				
+				gameAPI.SendServerCommand( "player_say " + type + " " + obj.toString());
+				oldChatSay(obj, bool);
+			};*/
 		}
 
 		public function showMainAbility(args:Object) : void {

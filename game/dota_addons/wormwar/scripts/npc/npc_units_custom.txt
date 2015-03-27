@@ -228,62 +228,6 @@
 
 	}
 
-	"golden_sheep"
-	{
-		// General
-		//
-		"BaseClass"					"npc_dota_creature"	
-		"Model"						"models/items/hex/sheep_hex/sheep_hex_gold.vmdl"	// Model.
-		//"ModelScale"				"0.6"
-		"SoundSet"					"n_creep_Melee"
-		//"GameSoundsFile"			"soundevents/game_sounds_creeps.vsndevts"
-
-		// Abilities
-		//----------------------------------------------------------------
-		
-		"Ability1"					""			
-		"Ability2"					""		
-		"Ability3"					"sheep_run"		
-		"Ability4"					"golden_sheep_passive"	
-
-		// Armor
-		//----------------------------------------------------------------
-		"ArmorPhysical"				"0"		// Physical protection.
-		"MagicalResistance"			"0"			// Magical protection.
-
-		// Attack
-		//----------------------------------------------------------------
-		"AttackCapabilities"		"DOTA_UNIT_CAP_NO_ATTACK"
-
-		// Bounty
-		//----------------------------------------------------------------
-		"BountyXP"					"0"			// Experience earn.
-		"BountyGoldMin"				"100"			// Gold earned min.
-		"BountyGoldMax"				"100"			// Gold earned max.
-
-		// Bounds
-		//----------------------------------------------------------------
-		"BoundsHullName"			"DOTA_HULL_SIZE_SMALL"			// Hull type used for navigation/locomotion.
-		//"RingRadius"				"150"
-		//"HealthBarOffset"			"300"
-
-		// Movement
-		//----------------------------------------------------------------
-		"MovementCapabilities"		"DOTA_UNIT_CAP_MOVE_GROUND"			// Type of locomotion - ground, air
-		"MovementSpeed"				"280"			// Speed
-
-		// Status
-		//----------------------------------------------------------------
-		"StatusHealth"				"100"		// Base health.
-		"StatusHealthRegen"			"0"			// Health regeneration rate.
-		"StatusMana"				"0"			// Base mana.
-		"StatusManaRegen"			"0"			// Mana regeneration rate.
-
-		// Team
-		//----------------------------------------------------------------
-		"TeamName"					"DOTA_TEAM_NEUTRALS"			// Team name.
-	}
-
 	"sheep"
 	{
 		// General
@@ -346,7 +290,7 @@
 		//
 		"BaseClass"					"npc_dota_creature"	
 		"Model"						"models/props_gameplay/pig.vmdl"	// Model.
-		//"ModelScale"				"1.2"
+		"ModelScale"				"1.1"
 		"SoundSet"					"n_creep_Melee"
 		//"GameSoundsFile"			"soundevents/game_sounds_creeps.vsndevts"
 

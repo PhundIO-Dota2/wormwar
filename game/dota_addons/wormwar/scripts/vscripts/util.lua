@@ -189,6 +189,12 @@ function ColorIt( sStr, sColor )
 		color = "FF00FF"
 	elseif sColor == "teal" then
 		color = "008080"
+	elseif sColor == "light_green" then
+		color = "99FF00"
+	elseif sColor == "sky_blue" then
+		color = "008080"
+	elseif sColor == "dark_green" then
+		color = "003300"
 	end
 	return "<font color='#" .. color .. "'>" .. sStr .. "</font>"
 end

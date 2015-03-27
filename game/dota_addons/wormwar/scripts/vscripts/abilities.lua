@@ -14,7 +14,7 @@ function Goo_Bomb( keys )
 
 	EmitGlobalSound("Hero_Treant.Overgrowth.Cast")
 
-	GameRules:SendCustomMessage(ColorIt(caster.playerName, "blue") .. " casted a " .. ColorIt("Goo Bomb!", "green"), 0, 0)
+	Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "casted a " .. COLOR_GREEN .. "Goo Bomb!", false)
 
 	for _,hero in pairs(WormWar.vHeroes) do
 		if hero ~= caster then
@@ -45,7 +45,7 @@ function Fiery_Jaw( keys )
 	local duration = ability:GetSpecialValueFor("duration")
 	print("Fiery_Jaw casted by P" .. caster:GetPlayerID())
 
-	GameRules:SendCustomMessage(ColorIt(caster.playerName, "blue") .. " activated " .. ColorIt("Fiery Jaw!", "orange"), 0, 0)
+	Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "activated " .. COLOR_ORANGE .. "Fiery Jaw!", false)
 
 	-- play effects
 	if not hero.fieryJawParticle then
@@ -79,7 +79,7 @@ function Segment_Bomb( keys )
 	local caster = keys.caster
 	local ability = keys.ability
 
-	GameRules:SendCustomMessage(ColorIt(caster.playerName, "blue") .. " casted a " .. ColorIt("Segment Bomb!", "red"), 0, 0)
+	Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "casted a " .. COLOR_RED .. "Segment Bomb!", false)
 
 	-- play cast sound
 	--caster:EmitSound("Hero_Tinker.Heat-Seeking_Missile")
@@ -88,8 +88,8 @@ function Segment_Bomb( keys )
 	for _,hero in ipairs(WormWar.vHeroes) do
 		if caster ~= hero then
 			local numSegments = #hero.body-1
-			local tenPercent = math.ceil(numSegments*.1)
-			for i=1,tenPercent do
+			local percent = math.ceil(numSegments*.15)
+			for i=1,percent do
 				local segment = hero.body[1]
 				table.remove(hero.body, 1)
 
@@ -112,7 +112,7 @@ function Crypt_Craving( keys )
 	print("Crypt_Craving casted by P" .. caster:GetPlayerID())
 	hero.playCryptDeath = false
 
-	GameRules:SendCustomMessage(ColorIt(caster.playerName, "blue") .. " casted " .. ColorIt("Crypt Craving!", "magenta"), 0, 0)
+	Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "casted " .. COLOR_DYELLOW .. "Crypt Craving!", false)
 
 	local foodEnts = {}
 	for _,ent in ipairs(Entities:FindAllInSphere(caster:GetAbsOrigin(), radius)) do
@@ -199,7 +199,7 @@ function Reverse( keys )
 	end
 
 	--hero.reverseCast = true
-	GameRules:SendCustomMessage(ColorIt(caster.playerName, "blue") .. " has" .. ColorIt(" reversed ", "purple") .. "himself!", 0, 0)
+	Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "has " .. COLOR_PURPLE .. "reversed" .. COLOR_NONE .. "himself!", false)
 
 	-- determine new facing dir
 	local p1 = body[1]:GetAbsOrigin()
@@ -225,12 +225,16 @@ function Reverse( keys )
 	hero:SetForwardVector(newDir)
 	hero.justUsedReverse = true
 	--hero:MoveToPosition(hero:GetAbsOrigin() + newDir*200)
-	local nextPos = hero:GetAbsOrigin() + newDir*200
-	ExecuteOrderFromTable({ UnitIndex = hero:GetEntityIndex(), OrderType = DOTA_UNIT_ORDER_MOVE_TO_POSITION,
-		Position = nextPos, Queue = false})
+	--local nextPos = hero:GetAbsOrigin() + newDir*500
+	hero.currMoveDir = newDir
+	hero.nextPos = hero:GetAbsOrigin() + newDir*500
+	--ExecuteOrderFromTable({ UnitIndex = hero:GetEntityIndex(), OrderType = DOTA_UNIT_ORDER_MOVE_TO_POSITION,
+	--	Position = nextPos, Queue = false})
 
 	-- update camera
-	--MovePlayerCameraToPos( hero, nextPos, true )
+	if not Testing then
+		MovePlayerCameraToPos( hero, hero.nextPos, true )
+	end
 
 	Timers:CreateTimer(.03, function()
 		hero.justUsedReverse = false

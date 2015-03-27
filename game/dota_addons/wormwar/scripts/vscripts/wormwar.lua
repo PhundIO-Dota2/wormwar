@@ -9,6 +9,37 @@ SheepDeathEffect = "particles/units/heroes/hero_nyx_assassin/nyx_assassin_spiked
 SheepDeathSound = ""
 
 SEGMENTS_TO_WIN = 60
+Bounds = {center = Vector(0,0,0), max = 6000, min = -6000}
+
+ColorStr = 
+{	-- This is plyID+1
+	[1] = "blue",
+	[2] = "cyan",
+	[3] = "purple",
+	[4] = "yellow",
+	[5] = "orange",
+	[6] = "pink",
+	[7] = "light_green",
+	[8] = "sky_blue",
+	[9] = "dark_green",
+	[10] = "brown",
+}
+
+ColorHex = 
+{	-- This is plyID+1
+	[1] = COLOR_BLUE,
+	[2] = COLOR_RED,
+	[3] = COLOR_PURPLE,
+	[4] = COLOR_DYELLOW,
+	[5] = COLOR_ORANGE,
+	[6] = COLOR_PINK,
+	[7] = COLOR_GREEN,
+	[8] = COLOR_SBLUE,
+	[9] = COLOR_DGREEN,
+	[10] = COLOR_GOLD,
+}
+
+
 
 if not Testing then
   statcollection.addStats({
@@ -75,9 +106,16 @@ function WormWar:OnWormInGame(hero)
 		if SEGMENTS_TO_WIN-hero.score > 10 and hero.followParticle then
 			ParticleManager:DestroyParticle(hero.followParticle, true);
 			hero.followParticle = nil
+			hero.almostWon = false
 		end
 
 		local heroPos = hero:GetAbsOrigin()
+
+		-- check if hero went past the map bounds
+		if heroPos.x > Bounds.max or heroPos.x < Bounds.min or heroPos.y > Bounds.max or heroPos.y < Bounds.min then
+			OnHeroOutOfBounds(hero)
+		end
+
 		local ents = Entities:FindAllInSphere(hero:GetAbsOrigin(), 300)
 		for i2,ent in ipairs(ents) do
 			if IsValidEntity(ent) then
@@ -104,26 +142,29 @@ function WormWar:OnWormInGame(hero)
 								end
 								if not hero.dontKill then
 									-- humiliation sound
-									if not (hero.score-SEGMENTS_TO_WIN >= 10) then
-										EmitGlobalSound("Humiliation01")
-									end
-									print("P" .. hero:GetPlayerID() .. " ran into himself!")
+									EmitGlobalSound("Humiliation01")
+									GlobalKillSoundPlayed = true
+									GameRules:SendCustomMessage(ColorIt(hero.playerName, hero.colStr) .. " ran into himself!", 0, 0)
 								end
 							else
 								-- hero got killed by another hero's segment.
 								if not hero.dontKill then
 									if currTime-hero2.lastSquishTime <= 5 then
-										print("hero2: " .. hero2:GetPlayerID())
 										EmitGlobalSound("Multisquish01")
+										GlobalKillSoundPlayed = true
 
 									else
-										EmitGlobalSound("Squish01")
+										if not hero.almostWon then
+											EmitGlobalSound("Squish01")
+										end
 									end
+									GameRules:SendCustomMessage(ColorIt(hero2.playerName, hero2.colStr) .. " just squished " .. 
+										ColorIt(hero.playerName, hero.colStr) .. "!", 0, 0)
 									hero2.lastSquishTime = currTime
 									-- get 5% of segments
 									local numSegments = #hero.body-1
-									local fivePercent = math.ceil(numSegments*.05)
-									AddSegments(hero2, fivePercent)
+									local percent = math.ceil(numSegments*.05)
+									AddSegments(hero2, percent)
 								end
 							end
 							if not hero.dontKill then
@@ -143,6 +184,9 @@ function WormWar:OnWormInGame(hero)
 						if ent.isInferno then
 							if not hero.hasFieryJaw then
 								EmitGlobalSound("Whoopsie01")
+								GlobalKillSoundPlayed = true
+								GameRules:SendCustomMessage(ColorIt(hero.playerName, hero.colStr) .. " ran into an " ..
+									ColorIt("inferno!", "red"), 0, 0)
 								KillWorm(hero, hero)
 							else
 								AddSegments(hero, 4)
@@ -223,78 +267,6 @@ function WormWar:OnWormInGame(hero)
 		if hero.wormHeadDummy then
 			hero.wormHeadDummy:SetAbsOrigin(hero.wormHeadDummy.hero:GetAbsOrigin())
 		end
-
-	end
-
-	function hero:MovementThink(  )
-		if not hero:IsAlive() then
-			-- cleanup movement stuff if hero isn't alive.
-			if hero.movementTimer then Timers:RemoveTimer(hero.movementTimer) end
-			hero.inContinuousMovement = false
-			return
-		end
-
-		local pos = hero:GetAbsOrigin()
-		local forwardVect = hero:GetForwardVector()
-
-		if hero.justUsedReverse then return end
-
-		local diff = math.abs(RotationDelta(VectorToAngles(forwardVect), VectorToAngles(hero.lastForwardVect)).y) -- this vector has x=0 and z=0.
-		local diff_interval = .001
-		--print("Angle diff: " .. diff)
-		--print("x: " .. diff.x .. " y: " .. diff.y .. " z: " .. diff.z)
-		-- check if hero is stopped
-		if diff < diff_interval and not hero.firstMoveOrder then
-			if GameRules:GetGameTime() >= hero.nextIdleCheckTime and not hero.underGooBomb and hero.inContinuousMovement then
-				local distSinceLastMove = (hero:GetAbsOrigin() - hero.lastIdlePos):Length2D()
-				--print("dist since last move: " .. distSinceLastMove)
-				if distSinceLastMove < 5 then
-					-- force move it
-					--print("Idle detected.")
-					ExecuteOrderFromTable({ UnitIndex = hero:GetEntityIndex(), OrderType = DOTA_UNIT_ORDER_MOVE_TO_POSITION, 
-						Position = hero.nextPos, Queue = false})
-				end
-				hero.lastIdlePos = hero:GetAbsOrigin()
-				hero.nextIdleCheckTime = GameRules:GetGameTime() + .05
-			end
-		end
-
-		if diff < diff_interval and not hero.inContinuousMovement and not hero.firstMoveOrder then
-			--print("hero.inContinuousMovement")
-			hero.lastGoodForwardVect = forwardVect
-			hero.nextPos = pos + hero.lastGoodForwardVect*500
-			if not GridNav:IsTraversable(hero.nextPos) then
-				hero.nextPos = pos + hero.lastGoodForwardVect*200
-			end
-
-			-- send first move order.
-			ExecuteOrderFromTable({ UnitIndex = hero:GetEntityIndex(), OrderType = DOTA_UNIT_ORDER_MOVE_TO_POSITION, 
-				Position = hero.nextPos, Queue = false})
-
-			Timers:RemoveTimer(hero.movementTimer)
-			hero.movementTimer = Timers:CreateTimer(function()
-				if not hero.inContinuousMovement then return nil end
-
-				local currPos = hero:GetAbsOrigin()
-				if IsPointWithinSquare(currPos, hero.nextPos, 32) then
-					hero.nextPos = currPos + hero.lastGoodForwardVect*500
-					if not GridNav:IsTraversable(hero.nextPos) then
-						hero.nextPos = currPos + hero.lastGoodForwardVect*200
-					end
-					
-					ExecuteOrderFromTable({ UnitIndex = hero:GetEntityIndex(), OrderType = DOTA_UNIT_ORDER_MOVE_TO_POSITION, 
-						Position = hero.nextPos, Queue = false})
-				end
-				return .05
-			end)
-			hero.inContinuousMovement = true
-		elseif diff > diff_interval and hero.inContinuousMovement then
-			--print("hero.inContinuousMovement false.")
-				hero.inContinuousMovement = false
-		elseif diff > diff_interval and hero.firstMoveOrder then
-			hero.firstMoveOrder = false
-		end
-		hero.lastForwardVect = forwardVect
 	end
 
 	function hero:AutoUpdateCamera(  )
@@ -352,7 +324,6 @@ function WormWar:OnWormInGame(hero)
 	hero.lastForwardVect = hero:GetForwardVector()
 	hero.lastCameraUpdateTime = GameRules:GetGameTime()
 	hero.lastSquishTime = -10
-	hero.firstMoveOrder = true
 	hero.killer = nil
 	--ero.firstOrder = false
 
@@ -365,9 +336,6 @@ function WormWar:OnWormInGame(hero)
 	wormHeadDummy:SetModel("models/development/invisiblebox.vmdl")
 	hero.wormHeadDummy = wormHeadDummy
 
-	hero.nextIdleCheckTime = GameRules:GetGameTime() + 1
-	hero.lastIdlePos = hero:GetAbsOrigin()
-
 	-- Store a reference to the player handle inside this hero handle.
 	hero.player = PlayerResource:GetPlayer(hero:GetPlayerID())
 	local ply = hero.player -- alias
@@ -375,8 +343,15 @@ function WormWar:OnWormInGame(hero)
 
 	-- Do first time stuff for this player.
 	if not ply.firstTime then
+		hero.firstMoveOrder = true
+		hero.plyID = hero:GetPlayerID()
+		hero.colHex = ColorHex[hero.plyID+1]
+		hero.colStr = ColorStr[hero.plyID+1]
 		-- Store the player's name inside this hero handle.
-		hero.playerName = PlayerResource:GetPlayerName(hero:GetPlayerID())
+		hero.playerName = PlayerResource:GetPlayerName(hero.plyID)
+		if hero.playerName == nil or hero.playerName == "" then
+			hero.playerName = "Bob"
+		end
 		-- Store this hero handle in this table.
 		table.insert(self.vHeroes, hero)
 		ply.worm = hero
@@ -417,6 +392,7 @@ function WormWar:OnWormInGame(hero)
 				return
 			elseif hero.firstMoveOrder then
 				hero.firstMoveOrder = false
+				print("firstMoveOrder")
 				hero.orderDetected = false
 				return
 			end
@@ -434,11 +410,12 @@ function WormWar:OnWormInGame(hero)
 
 				Timers:RemoveTimer(hero.movementTimer)
 				hero.movementTimer = Timers:CreateTimer(function()
+					if not hero:IsAlive() then return nil end
 					local currPos = hero:GetAbsOrigin()
 					if IsPointWithinSquare(currPos, hero.nextPos, 10) or hero:IsIdle() then
 						hero.nextPos = currPos + hero.currMoveDir*500
 						if not GridNav:IsTraversable(hero.nextPos) then
-							hero.nextPos = currPos + hero.currMoveDir*100
+							--hero.nextPos = currPos + hero.currMoveDir*100
 						end
 						hero.lastAutoMoveTime = GameRules:GetGameTime()
 						ExecuteOrderFromTable({ UnitIndex = hero:GetEntityIndex(), OrderType = DOTA_UNIT_ORDER_MOVE_TO_POSITION, 
@@ -498,9 +475,12 @@ function KillWorm( hero, killer )
 		hero.followParticle = nil
 	end
 
-	if hero.score-SEGMENTS_TO_WIN >= 10 then
+	if hero.almostWon and not GlobalKillSoundPlayed then
 		EmitGlobalSound("Denied01")
 	end
+	GlobalKillSoundPlayed = false
+	hero.lastAutoMoveTime = GameRules:GetGameTime()
+	hero:Stop()
 
 	-- remove the worm head segment dummy
 	hero.wormHeadDummy.makesWormDie = false
@@ -512,7 +492,6 @@ function KillWorm( hero, killer )
 		local abilName = hero:GetAbilityByIndex(0):GetAbilityName()
 		ReplaceAbility( hero, abilName, "wormwar_empty1" )
 	end
-
 	hero:ForceKill(true)
 	--[[if hero == killer then
 		hero.killer = killer
@@ -549,13 +528,11 @@ function AddSegments( hero, foodAmount )
 		if SEGMENTS_TO_WIN-10 == numSegments then
 			EmitGlobalSound("Warning10SegmentsRemaining01")
 			hero.followParticle = ParticleManager:CreateParticle("particles/infest_icon/life_stealer_infested_unit.vpcf", PATTACH_OVERHEAD_FOLLOW, hero)
+			hero.almostWon = true
 			local pos = hero:GetAbsOrigin()
-			--Vector(pos.x, pos.y, pos.z+20)
-			--ParticleManager:SetParticleControlEnt(hero.followParticle, 1, hero, 1, "follow_overhead", hero:GetAbsOrigin(), true)
-			ShowCenterMsg(hero.playerName .. " needs only 10 segments to win!", 2)
-			GameRules:SendCustomMessage(ColorIt(hero.playerName, "blue") .. ColorIt(" needs only 10 segments to win!", "orange"), 0, 0)
-			
-			--ShowCenterMsg("WORM WAR", 3)
+			--ShowCenterMsg(hero.playerName .. " needs only 10 segments to win!", 2)
+			Say(nil, hero.colHex .. hero.playerName .. COLOR_NONE .. "needs only 10 segments to win!", false)
+
 		end
 
 	end
@@ -574,9 +551,11 @@ function WormWar:PlayerSay( keys )
 	if txt == nil or txt == "" then
 		return
 	end
-
-  -- At this point we have valid text from a player.
-	--print("P" .. ply .. " wrote: " .. keys.text)
+	--print("txt: " .. txt)
+  	-- At this point we have valid text from a player.
+	if txt == "-showbanner" then
+		FireGameEvent("show_banner", {})
+	end
 end
 
 -- Cleanup a player when they leave
@@ -989,6 +968,10 @@ function WormWar:InitWormWar()
 	}
 
 	GlobalDummy = CreateUnitByName("dummy", OutOfWorldVector, false, nil, nil, DOTA_TEAM_GOODGUYS)
+	if Testing then
+		local center = GetGroundPosition(Vector(0,0,0), GlobalDummy)
+		DebugDrawBox(center, Vector(Bounds.min,Bounds.min,0), Vector(Bounds.max,Bounds.max,30), 255, 0, 0, 0, 4000)
+	end
 
 	-- spawn the units
 	for i=1,200 do
@@ -1012,8 +995,6 @@ function WormWar:InitWormWar()
 	Timers:CreateTimer(function()
 		for i,hero in ipairs(self.vHeroes) do
 			hero:OnThink()
-			-- movement thinker
-			--hero:MovementThink()
 		end
 
 		return NEXT_FRAME
@@ -1166,16 +1147,15 @@ function Creep:Init(name, loc)
 	unit.rad = unit:GetPaddedCollisionRadius()
 	unit.pos = unit:GetAbsOrigin()
 
-	if name == "pig" or name == "sheep" then
-		if name == "sheep" then
-			unit.isSheep = true
-		end
+	if name == "pig" then
 		unit.isFood = true;
-		unit.foodAmount = 1;
-	elseif name == "golden_sheep" then
+		unit.foodAmount = 2;
+	elseif name == "sheep" then
 		unit.isSheep = true
 		unit.isFood = true
-		unit.foodAmount = 2
+		unit.foodAmount = 1
+		--unit.goldenParticle = ParticleManager:CreateParticle("particles/golden_sheep/courier_international_2013_se.vpcf", PATTACH_ABSORIGIN_FOLLOW, unit)
+		--ParticleManager:SetParticleControlEnt(unit.goldenParticle, 1, unit, 1, "follow_origin", unit:GetAbsOrigin(), true)
 	elseif name == "inferno" then
 		unit.makesWormDie = true
 		unit.isInferno = true
@@ -1187,7 +1167,7 @@ function Creep:Init(name, loc)
 		if not IsValidEntity(unit) or not unit:IsAlive() then return end
 		unit:MoveToPosition(unit:GetAbsOrigin() + RandomVector(500))
 
-		return RandomFloat(2, 8);
+		return RandomFloat(4, 8);
 	end)
 
 	-- TODO: write thing that just takes into acct ring radius for collision detection.
@@ -1195,6 +1175,10 @@ function Creep:Init(name, loc)
 	function unit:OnThink(  )
 		if DrawDebug then
 			DebugDrawCircle(unit:GetAbsOrigin(), Vector(255,0,0), 60, unit.rad, true, .03)
+		end
+		local unitPos = unit:GetAbsOrigin()
+		if unitPos.x > Bounds.max or unitPos.x < Bounds.min or unitPos.y > Bounds.max or unitPos.y < Bounds.min then
+			-- TODO
 		end
 
 		if unit.isInferno then
@@ -1260,8 +1244,8 @@ function spawn_rune( point )
 end
 
 function GetRandomPos(  )
-	local spawn_x = RandomInt(-6000, 6000)
-	local spawn_y = RandomInt(-6000, 6000)
+	local spawn_x = RandomInt(Bounds.min, Bounds.max)
+	local spawn_y = RandomInt(Bounds.min, Bounds.max)
 	local pos = Vector(spawn_x, spawn_y, 0)
 	pos = GetGroundPosition(pos, GlobalDummy)
 	return pos
@@ -1274,13 +1258,31 @@ function GetRandomUnit(  )
 	-- 10% inferno
 	if roll <= 10 then
 		unit = "inferno"
-	-- 20% chance to spawn golden sheep
+	-- 20% chance to spawn pig
 	elseif roll <= 30 then
-		unit = "golden_sheep"
+		unit = "pig"
+	--10% chance to spawn rune
 	elseif roll <= 40 then
 		unit = "rune"
 	else
-		unit = "pig"
+		unit = "sheep"
 	end
 	return unit
+end
+
+function OnHeroOutOfBounds( hero )
+	hero:EmitSound("Hero_Zuus.ArcLightning.Cast")
+	for i=#hero.body, 1, -1 do
+		if i ~= 1 then
+			local segment = hero.body[i]
+			local nextSegment = hero.body[i-1]
+			local bolt = ParticleManager:CreateParticle("particles/units/heroes/hero_zuus/zuus_arc_lightning.vpcf", PATTACH_OVERHEAD_FOLLOW, segment) 
+			ParticleManager:SetParticleControl(bolt, 1, nextSegment:GetAbsOrigin())
+			nextSegment:EmitSound("Hero_Zuus.ArcLightning.Target")
+		end
+	end
+	EmitGlobalSound("Noob01")
+	GlobalKillSoundPlayed = true
+	KillWorm(hero, hero)
+	GameRules:SendCustomMessage(ColorIt(hero.playerName, hero.colStr) .. " just ran into a wall!", 0, 0)
 end

@@ -95,18 +95,9 @@
 		//-------------------------------------------------------------------------------------------------------------
 		"AbilityCastPoint"				"0"
 		"AbilityCooldown"				"0"
-		//"AbilityCastAnimation"			"ACT_DOTA_DISABLED"
 		"MaxLevel"						"1"
 		"AbilityManaCost"				"0"
 		
-		"OnSpellStart"
-		{
-			"RunScript"
-			{
-				"ScriptFile"			"scripts/vscripts/abilities.lua"
-				"Function"				"Crypt_Craving"
-			}
-		}
 		"AbilitySpecial"
 		{
 			"01"
@@ -115,6 +106,17 @@
 				"radius"				"800"
 			}
 		}
+		"AbilityCastRange"				"%radius"
+
+		"OnSpellStart"
+		{
+			"RunScript"
+			{
+				"ScriptFile"			"scripts/vscripts/abilities.lua"
+				"Function"				"Crypt_Craving"
+			}
+		}
+
 	}
 
 	"Goo_Bomb"
@@ -480,30 +482,6 @@
 		}
 	}
 
-	"sheep_passive"
-	{
-		"BaseClass"             		"ability_datadriven"
-		"MaxLevel" 						"1"
-	
-		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_PASSIVE | DOTA_ABILITY_BEHAVIOR_HIDDEN"
-		
-		"Modifiers"
-		{
-			"modifier_sheep"
-			{
-				"Passive"				"1"
-				"IsHidden"				"1"
-
-				"States"
-				{
-					"MODIFIER_STATE_UNSELECTABLE"			"MODIFIER_STATE_VALUE_ENABLED"
-					"MODIFIER_STATE_NO_HEALTH_BAR"			"MODIFIER_STATE_VALUE_ENABLED"
-					"MODIFIER_STATE_NO_UNIT_COLLISION"		"MODIFIER_STATE_VALUE_ENABLED"
-				}
-			}
-		}
-	}
-
 	"sheep_run"
 	{
 		"BaseClass"             		"ability_datadriven"
@@ -522,7 +500,7 @@
 		}
 	}
 
-	"golden_sheep_passive"
+	"sheep_passive"
 	{
 		"BaseClass"             		"ability_datadriven"
 		"MaxLevel" 						"1"
@@ -535,16 +513,6 @@
 			{
 				"Passive"				"1"
 				"IsHidden"				"1"
-
-				"OnCreated"
-				{
-					"AttachEffect"
-					{
-						"EffectName"		"particles/custom/courier_international_2013_se.vpcf"
-						"EffectAttachType"	"follow_origin"
-						"Target"           	"TARGET"
-					}
-				}
 
 				"States"
 				{
