@@ -17,22 +17,35 @@ function Precache( context )
 	PrecacheResource("particle_folder", "particles/spikes", context)
 	PrecacheResource("particle_folder", "particles/infest_icon", context)
 	PrecacheResource("particle_folder", "particles/golden_sheep", context)
+	PrecacheResource("particle_folder", "particles/rain_fx", context)
+	PrecacheResource("particle_folder", "particles/msg_fx", context)
+	PrecacheResource("particle_folder", "particles/segment", context)
+	PrecacheResource("particle_folder", "particles/storm_ball_lightning", context)
 	--PrecacheResource("particle_folder", "particles/econ/events/killbanners", context)
-	PrecacheResource("particle", "particles/units/heroes/hero_zuus/zuus_arc_lightning.vpcf", context)
-	PrecacheResource("particle", "particles/items_fx/blademail.vpcf", context)
 	PrecacheResource("particle", "particles/units/heroes/hero_bloodseeker/bloodseeker_rupture.vpcf", context)
 	PrecacheResource("particle", "particles/units/heroes/hero_huskar_temp/huskar_lifebreak_bloodyend.vpcf", context)
 	PrecacheResource("particle", "particles/units/heroes/hero_bristleback/bristleback_loadout.vpcf", context)
 	PrecacheResource("particle", "particles/units/heroes/hero_bristleback/bristleback_viscous_nasal_goo_debuff.vpcf", context)
 	PrecacheResource("particle", "particles/econ/items/lina/lina_head_headflame/lina_flame_hand_dual_headflame.vpcf", context)
+	PrecacheResource("particle", "particles/units/heroes/hero_zuus/zuus_arc_lightning.vpcf", context)
+	PrecacheResource("particle", "particles/units/heroes/hero_dark_seer/dark_seer_wall_of_replica.vpcf", context)
+	PrecacheResource("particle", "particles/units/heroes/hero_zuus/zuus_static_field.vpcf", context)
+	PrecacheResource("particle", "particles/units/heroes/hero_life_stealer/life_stealer_open_wounds_impact_slash_splatter.vpcf", context)
+	PrecacheResource("particle", "particles/dire_fx/bad_barracks_destruction_fire2.vpcf", context)
+	PrecacheResource("particle", "particles/units/heroes/hero_life_stealer/life_stealer_open_wounds_blood_lastpool.vpcf", context)
+	--PrecacheResource("particle", "particles/units/heroes/hero_stormspirit/stormspirit_ball_lightning.vpcf", context)
+	PrecacheResource("particle", "particles/units/heroes/hero_centaur/centaur_double_edge_bloodspray_src.vpcf", context)
+	PrecacheResource("particle", "particles/units/heroes/hero_zuus/zuus_lightning_bolt.vpcf", context)
+	PrecacheResource("particle", "particles/econ/items/razor/razor_punctured_crest/razor_static_link_blade.vpcf", context)
+	--particles/storm_ball_lightning/stormspirit_ball_lightning_sphere_arcs.vpcf
 
-	PrecacheResource("particle", "particles/legion_duel_start_text.vpcf", context)
+	--[[PrecacheResource("particle", "particles/legion_duel_start_text.vpcf", context)
 	PrecacheResource("particle", "particles/legion_duel_start_text_b.vpcf", context)
 	PrecacheResource("particle", "particles/legion_duel_start_text_b_glow.vpcf", context)
 	PrecacheResource("particle", "particles/legion_duel_start_text_burst.vpcf", context)
 	PrecacheResource("particle", "particles/legion_duel_start_text_burst_edge.vpcf", context)
 	PrecacheResource("particle", "particles/legion_duel_start_text_burst_flare.vpcf", context)
-	PrecacheResource("particle", "particles/legion_duel_start_text_glow.vpcf", context)
+	PrecacheResource("particle", "particles/legion_duel_start_text_glow.vpcf", context)]]
 
 	PrecacheResource("particle", "particles/units/heroes/hero_nyx_assassin/nyx_assassin_spiked_carapace_hit_blood.vpcf", context)
 
@@ -40,17 +53,14 @@ function Precache( context )
 
 	PrecacheResource("particle", "particles/units/heroes/hero_pugna/pugna_life_drain.vpcf", context)
 
-	--particles/units/heroes/hero_life_stealer/life_stealer_infest_emerge_bloody.vpcf
 	PrecacheResource("particle", "particles/units/heroes/hero_life_stealer/life_stealer_infest_emerge_bloody.vpcf", context)
-	--particles/units/heroes/hero_nyx_assassin/nyx_assassin_vendetta_blood.vpcf
 	PrecacheResource("particle", "particles/units/heroes/hero_nyx_assassin/nyx_assassin_vendetta_blood.vpcf", context)
-	--particles/units/heroes/hero_life_stealer/life_stealer_infested_unit_icon.vpcf
 	PrecacheResource("particle", "particles/units/heroes/hero_life_stealer/life_stealer_infested_unit_icon.vpcf", context)
 
 	PrecacheResource("particle", "particles/units/heroes/hero_invoker/invoker_forge_spirit_ambient.vpcf", context)
 	PrecacheResource("particle", "particles/units/heroes/hero_invoker/invoker_forge_spirit_death.vpcf", context)
 	PrecacheResource("particle", "particles/units/heroes/hero_invoker/invoker_forge_spirit_dlight.vpcf", context)
-	PrecacheResource("particle", "particles/units/heroes/hero_invoker/invoker_forge_spirit_ambient.vpcf.vpcf", context)
+	PrecacheResource("particle", "particles/units/heroes/hero_invoker/invoker_forge_spirit_ambient.vpcf", context)
 
 	-- Models can also be precached by folder or individually
 	--PrecacheModel should generally used over PrecacheResource for individual models
@@ -63,6 +73,8 @@ function Precache( context )
 	PrecacheModel("models/items/hex/sheep_hex/sheep_hex.vmdl", context)
 	PrecacheModel("models/items/hex/sheep_hex/sheep_hex_gold.vmdl", context)
 	PrecacheModel("models/props_wildlife/wildlife_millipede001.vmdl", context)
+	--models/heroes/weaver/weaver_beetle.vmdl
+	PrecacheModel("models/heroes/weaver/weaver_beetle.vmdl", context)
 
 	-- Sounds can precached here like anything else
 	PrecacheResource("soundfile", "soundevents/game_sounds_heroes/game_sounds_gyrocopter.vsndevts", context)
@@ -73,19 +85,24 @@ function Precache( context )
 	PrecacheResource("soundfile", "soundevents/game_sounds_heroes/game_sounds_invoker.vsndevts", context)
 	PrecacheResource("soundfile", "soundevents/game_sounds_heroes/game_sounds_zuus.vsndevts", context)
 	PrecacheResource("soundfile", "soundevents/game_sounds_creeps.vsndevts", context)
+	PrecacheResource("soundfile", "soundevents/game_sounds_items.vsndevts", context)
+	PrecacheResource("soundfile", "soundevents/game_sounds.vsndevts", context)
+	PrecacheResource("soundfile", "soundevents/game_sounds_ui.vsndevts", context)
+	--game_sounds_items
 	PrecacheResource("soundfile", "soundevents/soundevents_custom.vsndevts", context)
 	--Hero_Pugna.LifeDrain.Loop
 	--Hero_Invoker.ForgeSpirit
 
 	-- Entire items can be precached by name
 	-- Abilities can also be precached in this way despite the name
-	PrecacheItemByNameSync("example_ability", context)
-	PrecacheItemByNameSync("item_example_item", context)
+	--PrecacheItemByNameSync("example_ability", context)
+	--PrecacheItemByNameSync("item_example_item", context)
 
 	-- Entire heroes (sound effects/voice/models/particles) can be precached with PrecacheUnitByNameSync
 	-- Custom units from npc_units_custom.txt can also have all of their abilities and precache{} blocks precached in this way
 
 	PrecacheUnitByNameSync("npc_dota_hero_nyx_assassin", context)
+	PrecacheUnitByNameSync("npc_dota_hero_razor", context)
 end
 
 --MODULE LOADER STUFF by Adynathos

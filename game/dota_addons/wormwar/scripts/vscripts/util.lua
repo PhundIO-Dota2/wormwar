@@ -204,9 +204,9 @@ end
 	center: center of the square. (Vector)
 	length: length of 1 side of square. (Float)
 ]]
-function IsPointWithinSquare(p, center, length)
-	if (p.x > center.x-length and p.x < center.x+length) and 
-		(p.y > center.y-length and p.y < center.y+length) then
+function IsPointWithinSquare(p, center, halfLength)
+	if (p.x > center.x-halfLength and p.x < center.x+halfLength) and 
+		(p.y > center.y-halfLength and p.y < center.y+halfLength) then
 		return true
 	end
 	return false

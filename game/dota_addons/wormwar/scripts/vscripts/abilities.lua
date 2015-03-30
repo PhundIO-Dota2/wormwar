@@ -43,15 +43,16 @@ function Fiery_Jaw( keys )
 	local hero = caster
 	local ability = keys.ability
 	local duration = ability:GetSpecialValueFor("duration")
-	print("Fiery_Jaw casted by P" .. caster:GetPlayerID())
+	--print("Fiery_Jaw casted by P" .. caster:GetPlayerID())
 
-	Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "activated " .. COLOR_ORANGE .. "Fiery Jaw!", false)
+	Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "activated " .. COLOR_GOLD .. "Fiery Jaw!", false)
 
 	-- play effects
 	if not hero.fieryJawParticle then
 		--particles/econ/items/lina/lina_head_headflame/lina_flame_hand_dual_headflame.vpcf
 		hero.fieryJawParticle = ParticleManager:CreateParticle("particles/econ/items/lina/lina_head_headflame/lina_flame_hand_dual_headflame.vpcf", 
 			PATTACH_OVERHEAD_FOLLOW, hero)
+		hero:EmitSound("DOTA_Item.SoulRing.Activate")
 	end
 
 	caster.hasFieryJaw = true
@@ -62,6 +63,7 @@ function Fiery_Jaw( keys )
 			caster.hasFieryJaw = false
 			-- remove effect
 			ParticleManager:DestroyParticle(caster.fieryJawParticle, false);
+			--hero:EmitSound("DOTA_Item.Armlet.DeActivate")
 			caster.fieryJawParticle = nil
 			return nil
 			--PopupDamageOverTime(target, amount)
@@ -92,7 +94,9 @@ function Segment_Bomb( keys )
 			for i=1,percent do
 				local segment = hero.body[1]
 				table.remove(hero.body, 1)
-
+				PopupMinus(hero, 1)
+				--particles/dire_fx/bad_barracks_destruction_fire2.vpcf
+				ParticleManager:CreateParticle("particles/dire_fx/bad_barracks_destruction_fire2.vpcf", PATTACH_OVERHEAD_FOLLOW, segment)
 				KillSegment(segment)
 			end
 			-- play impact sound
@@ -109,10 +113,10 @@ function Crypt_Craving( keys )
 	local hero = caster
 	local ability = keys.ability
 	local radius = ability:GetSpecialValueFor("radius")
-	print("Crypt_Craving casted by P" .. caster:GetPlayerID())
+	--print("Crypt_Craving casted by P" .. caster:GetPlayerID())
 	hero.playCryptDeath = false
 
-	Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "casted " .. COLOR_DYELLOW .. "Crypt Craving!", false)
+	Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "casted " .. COLOR_SPINK .. "Crypt Craving!", false)
 
 	local foodEnts = {}
 	for _,ent in ipairs(Entities:FindAllInSphere(caster:GetAbsOrigin(), radius)) do
@@ -125,7 +129,7 @@ function Crypt_Craving( keys )
 			Physics:Unit(ent)
 
 			-- attach particle effect
-			local craveParticle = ParticleManager:CreateParticle("particles/units/heroes/hero_pugna/pugna_life_drain.vpcf", PATTACH_ABSORIGIN_FOLLOW, hero)
+			local craveParticle = ParticleManager:CreateParticle("particles/units/heroes/hero_pugna/pugna_life_drain.vpcf", PATTACH_OVERHEAD_FOLLOW, hero)
 			ParticleManager:SetParticleControl(craveParticle, 1, ent:GetAbsOrigin())
 			ParticleManager:SetParticleControlEnt(craveParticle, 1, ent, 1, "follow_origin", ent:GetAbsOrigin(), true)
 
@@ -152,7 +156,7 @@ function Crypt_Craving( keys )
 
 				-- update pos
 				local dir = (heroPos-entPos):Normalized()
-				ent:SetPhysicsVelocity(dir*1000)
+				ent:SetPhysicsVelocity(dir*1400)
 
 				if not hero:IsAlive() or circle_circle_collision(heroPos, entPos, hero:GetPaddedCollisionRadius(), ent:GetPaddedCollisionRadius()) then
 					entsKilled = entsKilled + 1
@@ -187,14 +191,19 @@ function Reverse( keys )
 	local caster = keys.caster
 	local hero = caster
 	local ability = keys.ability
-	print("Reverse casted by P" .. hero:GetPlayerID())
+	--print("Reverse casted by P" .. hero:GetPlayerID())
 	local body = hero.body
 	local newBody = {}
 	local bodyLen = #body
 
+	-- play sound
+	hero:EmitSound("Hero_Weaver.TimeLapse")
+
 	-- ensure worm has segments
 	if not (bodyLen >= 2) then
 		ReplaceAbility( caster, "Reverse", "wormwar_empty1" )
+		-- just make him face the opposite direction.
+		hero:SetForwardVector(-1*hero:GetForwardVector())
 		return
 	end
 
@@ -215,9 +224,6 @@ function Reverse( keys )
 	newBody[bodyLen] = hero
 	hero.body = newBody
 
-	-- play sound
-	hero:EmitSound("Hero_Weaver.TimeLapse")
-
 	-- teleport hero
 	local newPos = p1+newDir*150
 	hero:SetAbsOrigin(newPos)
@@ -231,13 +237,17 @@ function Reverse( keys )
 	--ExecuteOrderFromTable({ UnitIndex = hero:GetEntityIndex(), OrderType = DOTA_UNIT_ORDER_MOVE_TO_POSITION,
 	--	Position = nextPos, Queue = false})
 
-	-- update camera
-	if not Testing then
+	--[[if not Testing then
 		MovePlayerCameraToPos( hero, hero.nextPos, true )
-	end
+	end]]
 
 	Timers:CreateTimer(.03, function()
 		hero.justUsedReverse = false
+	end)
+
+	Timers:CreateTimer(.07, function()
+		-- update camera
+		caster:AddNewModifier(caster, nil, "modifier_camera_follow", {})
 	end)
 
 	ReplaceAbility( caster, "Reverse", "wormwar_empty1" )

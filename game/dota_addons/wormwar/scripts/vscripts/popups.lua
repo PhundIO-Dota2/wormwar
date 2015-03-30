@@ -53,6 +53,10 @@ function PopupGoldGain(target, amount)
     PopupNumbers(target, "damage", Vector(255, 200, 33), 3.0, amount, POPUP_SYMBOL_PRE_PLUS, nil)
 end
 
+function PopupMinus(target, amount)
+    PopupNumbers(target, "damage", Vector(255, 0, 0), 3.0, amount, POPUP_SYMBOL_PRE_MINUS, nil)
+end
+
 -- e.g. when missing uphill
 function PopupMiss(target)
     PopupNumbers(target, "miss", Vector(255, 0, 0), 1.0, nil, POPUP_SYMBOL_PRE_MISS, nil)
