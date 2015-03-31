@@ -1,3 +1,10 @@
+-- Dota 2 Worm War
+-- Developer: Myll
+-- Credits to: BMD (Timers/Physics/Barebones), Blizzard Entertainment (Various Assets, WC3 Worm War)
+-- ... Noya (code snippets taken from Courier Madness), a_dizzle (Flash Scoreboard), zedor (Flash stuff)
+-- If you feel like you should be in the credits let me know.
+-- Thanks to everybody who helps spread modding information through moddota.com, Github, IRC, etc.
+
 print ('[WORMWAR] wormwar.lua' )
 
 NEXT_FRAME = .01
@@ -38,13 +45,8 @@ ColorHex =
 	[10] = COLOR_GOLD,
 }
 
-
-
 if not Testing then
-	statcollection.addStats(
-		{
-			modID = 'XXXXXXXXXXXXXXXXXXX'
-		})
+	statcollection.addStats({ modID = 'XXXXXXXXXXXXXXXXXXX' })
 	SEGMENTS_TO_WIN = 60
 else
 	SEGMENTS_TO_WIN = 20
@@ -108,6 +110,9 @@ function WormWar:OnWormInGame(hero)
 			}
 			EmitGlobalSound("Wormtastic01")
 			self.gameOver = true
+			Winner = hero
+			PlayEndingCinematic()
+			return
 		end
 		if SEGMENTS_TO_WIN-hero.score > 10 and hero.followParticle then
 			ParticleManager:DestroyParticle(hero.followParticle, true);
@@ -167,6 +172,10 @@ function WormWar:OnWormInGame(hero)
 									end
 									GameRules:SendCustomMessage(ColorIt(hero2.playerName, hero2.colStr) .. " just squished " .. 
 										ColorIt(hero.playerName, hero.colStr) .. "!", 0, 0)
+									hero2.killStreak = hero2.killStreak + 1
+
+									PerformKillBanner(hero2.killStreak)
+
 									hero2.lastSquishTime = currTime
 									-- get % of segments
 									local numSegments = #hero.body-1
@@ -175,9 +184,9 @@ function WormWar:OnWormInGame(hero)
 								end
 							end
 							if not hero.dontKill then
-								KillWorm(hero, hero2)
+								KillWorm(hero)
 								if not self.firstBlood then
-									--PopupKillbanner(hero2, "firstblood")
+									PopupKillbanner(hero2, "firstblood")
 									self.firstBlood = true
 								end
 							else
@@ -194,7 +203,7 @@ function WormWar:OnWormInGame(hero)
 								GlobalKillSoundPlayed = true
 								GameRules:SendCustomMessage(ColorIt(hero.playerName, hero.colStr) .. " ran into an " ..
 									ColorIt("Inferno!", "red"), 0, 0)
-								KillWorm(hero, hero)
+								KillWorm(hero)
 							else
 								AddSegments(hero, 4)
 								ent.isInferno = false
@@ -393,6 +402,7 @@ function WormWar:OnWormInGame(hero)
 	hero.lastCameraUpdateTime = GameRules:GetGameTime()
 	hero.lastSquishTime = -50
 	hero.firstForwardChange = false
+	hero.killStreak = 0
 	hero:MovementThink()
 
 	local wormHeadDummy = CreateUnitByName("segment", hero:GetAbsOrigin(), false, nil, hero, hero:GetTeam())
@@ -486,7 +496,7 @@ function KillSegment( segment )
 	segment:ForceKill(true)
 end
 
-function KillWorm( hero, killer )
+function KillWorm( hero )
 	if not Testing then
 		hero:SetTimeUntilRespawn(5)
 	else
@@ -507,8 +517,6 @@ function KillWorm( hero, killer )
 
 	hero.almostWon = false
 	GlobalKillSoundPlayed = false
-	hero.lastAutoMoveTime = GameRules:GetGameTime()
-	hero:Stop()
 	Timers:RemoveTimer(hero.movementTimer)
 
 	-- remove the worm head segment dummy
@@ -582,7 +590,8 @@ function AddSegments( hero, foodAmount )
 			hero.almostWon = true
 			local pos = hero:GetAbsOrigin()
 			--ShowCenterMsg(hero.playerName .. " needs only 10 segments to win!", 2)
-			Say(nil, hero.colHex .. hero.playerName .. COLOR_NONE .. "needs only " .. COLOR_ORANGE .. "10 segments " .. COLOR_NONE .. "to win!", false)
+			Say(nil, hero.colHex .. hero.playerName .. COLOR_NONE .. "needs only " .. COLOR_ORANGE .. "10 segments to win! " ..
+				COLOR_RED .. "SQUISH HIM!!", false)
 
 		end
 
@@ -910,7 +919,7 @@ function WormWar:InitWormWar()
 	GameRules:SetPreGameTime( 0)
 	GameRules:SetPostGameTime( 30 )
 	GameRules:SetUseBaseGoldBountyOnHeroes(false)
-	GameRules:SetHideKillMessageHeaders(false)
+	--GameRules:SetHideKillMessageHeaders(false)
 	--print('[WORMWAR] GameRules set')
 
 	InitLogFile( "log/wormwar.txt","")
@@ -948,6 +957,13 @@ function WormWar:InitWormWar()
 		ForceNextRune = args[1]
 		print("ForceNextRune: " .. ForceNextRune)
 	end, 'Goo_Bomb,Fiery_Jaw,Segment_Bomb,Crypt_Craving,Reverse', 0)
+
+	Convars:RegisterCommand('show_banner', function(...)
+		local args = {...}
+		table.remove(args,1)
+		local cmdPlayer = Convars:GetCommandClient()
+		FireGameEvent("show_banner", {})
+	end, '', 0)
 
 	Convars:RegisterCommand('test_worm_spawns', function(...)
 		local args = {...}
@@ -1125,7 +1141,7 @@ function WormWar:CaptureWormWar()
 		--mode:SetCameraDistanceOverride( 1134 )
 		mode:SetBuybackEnabled( false )
 		mode:SetTopBarTeamValuesOverride ( true )
-		mode:SetTopBarTeamValuesVisible( false )
+		mode:SetTopBarTeamValuesVisible( true ) -- this needed for kill banners?
 		--mode:SetFogOfWarDisabled(true)
 		mode:SetGoldSoundDisabled( true )
 		--mode:SetRemoveIllusionsOnDeath( true )
@@ -1353,6 +1369,8 @@ end
 function spawn_rune( point )
 
 	local rune = CreateUnitByName("rune", point, true, nil, nil, DOTA_TEAM_NEUTRALS)
+	ParticleManager:CreateParticle("particles/generic_hero_status/hero_levelup_copy.vpcf", PATTACH_ABSORIGIN, rune)
+	--particles/generic_hero_status/hero_levelup_copy.vpcf
 	rune.isRune = true
 	rune.wormWarUnit = true
 	rune.runeType = WormWar.runeTypes[RandomInt(1,#WormWar.runeTypes)]
@@ -1410,7 +1428,7 @@ function OnHeroOutOfBounds( hero )
 
 	hero.outOfBounds = true
 
-	KillWorm(hero, hero)
+	KillWorm(hero)
 
 	GameRules:SendCustomMessage(ColorIt(hero.playerName, hero.colStr) .. " just ran into a wall!", 0, 0)
 end
@@ -1461,7 +1479,7 @@ function InitMap(  )
 			Pillars[4]:SetAbsOrigin(Vector(Bounds.max+offset, Bounds.min-offset,z))
 		end
 		local newPos = Pillars[i]:GetAbsOrigin()
-		PillarParticles[i]:SetAbsOrigin(Vector(newPos.x, newPos.y, newPos.z+300))
+		PillarParticles[i]:SetAbsOrigin(Vector(newPos.x, newPos.y, newPos.z+200))
 	end
 
 	VisionDummies = {GoodGuys = {}, BadGuys = {}}
@@ -1566,4 +1584,50 @@ function PlayCentaurBloodEffect( unit )
 	ParticleManager:SetParticleControl(blood, 2, targetLoc+RandomVector(RandomInt(20,100)))
 	ParticleManager:SetParticleControl(blood, 4, targetLoc+RandomVector(RandomInt(20,100)))
 	ParticleManager:SetParticleControl(blood, 5, targetLoc+RandomVector(RandomInt(20,100)))
+end
+
+function PlayEndingCinematic(  )
+	-- dota_camera_pitch_max default = 50
+	-- dota_camera_yaw default = 90
+	-- CAMERA_DISTANCE_OVERRIDE = 1400
+	local camera_loop = {}
+	camera_loop.pitch_max = 50 --{-100 to 100}, 
+	camera_loop.yaw = 90 --{0 to 360}, 
+	camera_loop.distance = 1400
+	SendToConsole("r_farz 5000")
+
+	for i=1,100 do
+
+		Timers:CreateTimer(i*0.03, function()
+
+			camera_loop.pitch_max = camera_loop.pitch_max - 0.2 --up to 10
+			camera_loop.yaw = camera_loop.yaw + 1.8 --up to 270
+			camera_loop.distance = camera_loop.distance - 6 --1400 to 800
+
+			SendToConsole("dota_camera_pitch_max "..camera_loop.pitch_max)
+			SendToConsole("dota_camera_yaw "..camera_loop.yaw)
+			mode:SetCameraDistanceOverride( camera_loop.distance )
+
+		end)
+	end
+
+	-- 10 sec later, rotate another 180, from 270 to 450
+	Timers:CreateTimer(10.0, function() 
+		for i=1,100 do
+			Timers:CreateTimer(i*0.03, function()
+
+				camera_loop.yaw = camera_loop.yaw + 1.8
+				camera_loop.distance = camera_loop.distance + 6 --1400 to 800
+
+				--SendToConsole("dota_camera_pitch_max "..camera_loop.pitch_max)
+				SendToConsole("dota_camera_yaw "..camera_loop.yaw)
+				mode:SetCameraDistanceOverride( camera_loop.distance )
+			end)
+		end		
+	end)
+end
+
+function PerformKillBanner( streak )
+	
+
 end

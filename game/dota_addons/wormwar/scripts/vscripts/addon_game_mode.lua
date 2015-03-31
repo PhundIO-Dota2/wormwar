@@ -39,6 +39,8 @@ function Precache( context )
 	--PrecacheResource("particle", "particles/storm_ball_lightning/stormspirit_ball_lightning_sphere_arcs.vpcf", context)
 	PrecacheResource("particle", "particles/units/heroes/hero_phantom_assassin/phantom_assassin_crit_impact.vpcf", context)
 	PrecacheResource("particle", "particles/units/heroes/hero_pudge/pudge_dismember.vpcf", context)
+	PrecacheResource("particle", "particles/generic_hero_status/hero_levelup_copy.vpcf", context)
+	--particles/generic_hero_status/hero_levelup_copy.vpcf
 	--[[PrecacheResource("particle", "blah", context)
 	PrecacheResource("particle", "blah", context)
 	PrecacheResource("particle", "blah", context)

@@ -47,32 +47,37 @@
 
 			//let the client rescale the UI
 			Globals.instance.resizeManager.AddListener(this);
-			
+			globals.Loader_shared_heroselectorandloadout.movieClip.heroDock.repickButton.enabled = false
+			globals.Loader_shared_heroselectorandloadout.movieClip.heroDock.playGameButton.enabled = false
+
 			//overrideKillBanners();
+			//globals.Loader_hud_chat.movieClip.headerRampage0.symbolTextField.headerTextField	
 
 			//pass the gameAPI on to the modules
 			this.scoreBoard.setup(this.gameAPI, this.globals);
 			trace("scoreBoard.setup called.");
 			
 			//this is not needed, but it shows you your UI has loaded (needs 'scaleform_spew 1' in console)
-			trace("[CustomUI] OnLoaded finished!5");
+			trace("[CustomUI] OnLoaded finished!");
 		}
 		
 		public function showBanner() : void {
-			var obj = globals.Loader_hud_chat.movieClip.headerFirstBlood0;
-			trace("showBanner")
+			trace("showBanner start")
+			var obj = globals.Loader_hud_chat.movieClip.headerRampage0
 			Util.PrintTable(obj)
-			obj.headerIcon.visible = true;
+			obj.symbolTextField.headerTextField.visible = true
+			obj.symbolTextField.symbolTextField.visible = true
+			/*obj.symbolTextField.headerTextField.text = "HELLO%21%21"
+			obj.visible = true;
 			obj.symbolTextField.visible = true;
-			/*var oldChatSay:Function = globals.Loader_hud_chat.movieClip.gameAPI.ChatSay;
-			globals.Loader_hud_chat.movieClip.gameAPI.ChatSay = function(obj:Object, bool:Boolean){
-				var type:int = globals.Loader_hud_chat.movieClip.m_nLastMessageMode
-				if (bool)
-					type = 4
-				
-				gameAPI.SendServerCommand( "player_say " + type + " " + obj.toString());
-				oldChatSay(obj, bool);
-			};*/
+			obj.symbolTextField.visible = true;
+			var i:int = 0;
+			for (i = 0; i<obj.numChildren; i++)
+			{
+			    trace(obj.getChildAt(i));
+			    obj.getChildAt(i).visible = true;
+			}*/
+			trace("showBanner end")
 		}
 
 		public function showMainAbility(args:Object) : void {

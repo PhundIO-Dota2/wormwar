@@ -8,7 +8,7 @@
 		// General
 		"BaseClass"					"npc_dota_creature"	
 		"Model"						"models/props_gameplay/rune_illusion01.vmdl"
-		"ModelScale"				"1.3"
+		"ModelScale"				"1.5"
 		"MinimapIcon"				"minimap_candybucket"
 		"MinimapIconSize"			"600"
 

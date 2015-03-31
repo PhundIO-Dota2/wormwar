@@ -93,7 +93,7 @@ function Segment_Bomb( keys )
 	for _,hero in ipairs(WormWar.vHeroes) do
 		if caster ~= hero then
 			local numSegments = #hero.body-1
-			local percent = math.ceil(numSegments*.15)
+			local percent = math.ceil(numSegments*.20)
 			for i=1,percent do
 				local segment = hero.body[1]
 				table.remove(hero.body, 1)
