@@ -5,7 +5,6 @@ BASE_MODULES = {
 	'lib.statcollection',
 	'abilities',
 	'popups',
-	'flashutil',
 	'wormwar',
 }
 
@@ -33,19 +32,35 @@ function Precache( context )
 	PrecacheResource("particle", "particles/units/heroes/hero_life_stealer/life_stealer_open_wounds_impact_slash_splatter.vpcf", context)
 	PrecacheResource("particle", "particles/dire_fx/bad_barracks_destruction_fire2.vpcf", context)
 	PrecacheResource("particle", "particles/units/heroes/hero_life_stealer/life_stealer_open_wounds_blood_lastpool.vpcf", context)
-	--PrecacheResource("particle", "particles/units/heroes/hero_stormspirit/stormspirit_ball_lightning.vpcf", context)
+	PrecacheResource("particle", "particles/units/heroes/hero_zuus/zuus_thundergods_wrath_start.vpcf", context)
 	PrecacheResource("particle", "particles/units/heroes/hero_centaur/centaur_double_edge_bloodspray_src.vpcf", context)
 	PrecacheResource("particle", "particles/units/heroes/hero_zuus/zuus_lightning_bolt.vpcf", context)
-	PrecacheResource("particle", "particles/econ/items/razor/razor_punctured_crest/razor_static_link_blade.vpcf", context)
-	--particles/storm_ball_lightning/stormspirit_ball_lightning_sphere_arcs.vpcf
+	PrecacheResource("particle", "particles/storm_ball_lightning/stormspirit_ball_lightning.vpcf", context)
+	--PrecacheResource("particle", "particles/storm_ball_lightning/stormspirit_ball_lightning_sphere_arcs.vpcf", context)
+	PrecacheResource("particle", "particles/units/heroes/hero_phantom_assassin/phantom_assassin_crit_impact.vpcf", context)
+	PrecacheResource("particle", "particles/units/heroes/hero_pudge/pudge_dismember.vpcf", context)
+	--[[PrecacheResource("particle", "blah", context)
+	PrecacheResource("particle", "blah", context)
+	PrecacheResource("particle", "blah", context)
+	PrecacheResource("particle", "blah", context)
+	PrecacheResource("particle", "blah", context)
+	PrecacheResource("particle", "blah", context)
+	PrecacheResource("particle", "blah", context)
+	PrecacheResource("particle", "blah", context)
+	PrecacheResource("particle", "blah", context)
+	PrecacheResource("particle", "blah", context)
+	PrecacheResource("particle", "blah", context)
+	PrecacheResource("particle", "blah", context)
+	PrecacheResource("particle", "blah", context)
+	PrecacheResource("particle", "blah", context)
+	PrecacheResource("particle", "blah", context)
+	PrecacheResource("particle", "blah", context)]]
 
-	--[[PrecacheResource("particle", "particles/legion_duel_start_text.vpcf", context)
-	PrecacheResource("particle", "particles/legion_duel_start_text_b.vpcf", context)
+	--particles/storm_ball_lightning/stormspirit_ball_lightning_sphere_arcs.vpcf
+	--[[PrecacheResource("particle", "particles/legion_duel_start_text_b.vpcf", context)
 	PrecacheResource("particle", "particles/legion_duel_start_text_b_glow.vpcf", context)
-	PrecacheResource("particle", "particles/legion_duel_start_text_burst.vpcf", context)
-	PrecacheResource("particle", "particles/legion_duel_start_text_burst_edge.vpcf", context)
-	PrecacheResource("particle", "particles/legion_duel_start_text_burst_flare.vpcf", context)
-	PrecacheResource("particle", "particles/legion_duel_start_text_glow.vpcf", context)]]
+	PrecacheResource("particle", "particles/legion_duel_start_text_burst.vpcf", context)]]
+	--particles/units/heroes/hero_pudge/pudge_dismember.vpcf
 
 	PrecacheResource("particle", "particles/units/heroes/hero_nyx_assassin/nyx_assassin_spiked_carapace_hit_blood.vpcf", context)
 

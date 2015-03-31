@@ -5,9 +5,7 @@ Testing = true
 TestMoreAbilities = false
 OutOfWorldVector = Vector(5000, 5000, -200)
 DrawDebug = false
-
-SheepDeathEffect = "particles/units/heroes/hero_nyx_assassin/nyx_assassin_spiked_carapace_hit_blood.vpcf"
---SheepDeathEffect = "particles/units/heroes/hero_centaur/centaur_double_edge_bloodspray_src.vpcf"
+UseCursorStream = false
 
 SEGMENTS_TO_WIN = 60
 Bounds = {center = Vector(0,0,0), max = 4000, min = -4000}
@@ -124,7 +122,8 @@ function WormWar:OnWormInGame(hero)
 			OnHeroOutOfBounds(hero)
 		end
 
-		local ents = Entities:FindAllInSphere(hero:GetAbsOrigin(), 300)
+		local ents = Entities:FindAllInSphere(hero:GetAbsOrigin(), 200)
+		--print("num ents: " .. #ents)
 		for i2,ent in ipairs(ents) do
 			if IsValidEntity(ent) then
 				local entPos = ent:GetAbsOrigin()
@@ -212,6 +211,7 @@ function WormWar:OnWormInGame(hero)
 						-- create blood splatter
 						PlayCentaurBloodEffect(ent)
 						ParticleManager:CreateParticle("particles/units/heroes/hero_life_stealer/life_stealer_open_wounds_blood_lastpool.vpcf", PATTACH_ABSORIGIN, ent)
+						--ent:CastAbilityImmediately(ent:FindAbilityByName("sheep_death_effect"), 0)
 
 						-- play sound effect
 						local unitName = ent:GetUnitName()
@@ -234,7 +234,12 @@ function WormWar:OnWormInGame(hero)
 						hero:EmitSound("Bottle.Cork")
 						--EmitSoundOnClient("Bottle.Cork", hero.player)
 						ent.isRune = false;
+						SpawnWormWarUnit(true)
 						ent:RemoveSelf()
+						-- set it underground
+						--[[local p = ent:GetAbsOrigin()
+						ent:SetAbsOrigin(Vector(p.x,p.y,p.z-300))
+						ent:ForceKill(true)]]
 					end
 				end
 			end -- endfor
@@ -278,6 +283,54 @@ function WormWar:OnWormInGame(hero)
 		if hero.wormHeadDummy then
 			hero.wormHeadDummy:SetAbsOrigin(hero.wormHeadDummy.hero:GetAbsOrigin())
 		end
+	end
+
+	function hero:MovementThink(  )
+		local timesDeltaWasZero = 0
+		local timesDeltaWasNotZero = 0
+		local moveMagnitude = 1000
+		hero.movementTimer = Timers:CreateTimer(function()
+			if not hero:IsAlive() then return end
+
+			local currPos = hero:GetAbsOrigin()
+			local currForward = hero:GetForwardVector()
+			if not hero.lastForward then
+				hero.lastForward = currForward
+			end
+			local lastForward = hero.lastForward
+			local delta = math.abs(RotationDelta(VectorToAngles(currForward), VectorToAngles(lastForward)).y)
+			--print("delta: " .. delta)
+			if delta < .001 then
+				timesDeltaWasZero = timesDeltaWasZero + 1 -- lets wait a bit before we're sure this unit should be in continuous movement.
+				if not hero.inContinuousMovement and timesDeltaWasZero > 2 and hero.secondOrder then
+					timesDeltaWasNotZero = 0
+					--print("hero.inContinuousMovement")
+					hero.nextPos = currPos + currForward*moveMagnitude
+					hero.inContinuousMovement = true
+				end
+			else
+				timesDeltaWasNotZero = timesDeltaWasNotZero + 1
+				if hero.inContinuousMovement and timesDeltaWasNotZero > 2 then
+					timesDeltaWasZero = 0
+					hero.inContinuousMovement = false
+				end
+				if not hero.firstForwardChange and timesDeltaWasNotZero > 2 then
+					--print("hero.firstForwardChange")
+					hero.firstForwardChange = true
+				end
+			end
+
+			if hero.inContinuousMovement then
+				if hero.firstForwardChange and (hero:IsIdle() or IsPointWithinSquare(currPos, hero.nextPos, 10)) then
+					hero.nextPos = currPos + moveMagnitude*currForward
+					ExecuteOrderFromTable({ UnitIndex = hero:GetEntityIndex(), OrderType = DOTA_UNIT_ORDER_MOVE_TO_POSITION, 
+						Position = hero.nextPos, Queue = false})
+				end
+			end
+
+			hero.lastForward = currForward
+			return .03
+		end)
 	end
 
 	function hero:AutoUpdateCamera(  )
@@ -339,7 +392,8 @@ function WormWar:OnWormInGame(hero)
 	hero.body = {[1] = hero}
 	hero.lastCameraUpdateTime = GameRules:GetGameTime()
 	hero.lastSquishTime = -50
-	
+	hero.firstForwardChange = false
+	hero:MovementThink()
 
 	local wormHeadDummy = CreateUnitByName("segment", hero:GetAbsOrigin(), false, nil, hero, hero:GetTeam())
 	wormHeadDummy.isWormHeadDummy = true
@@ -391,54 +445,6 @@ function WormWar:OnWormInGame(hero)
 		end
 		--local spikeParticle = ParticleManager:CreateParticle("particles/spikes/nyx_assassin_spiked_carapace.vpcf", PATTACH_ABSORIGIN_FOLLOW, hero)
 		--ParticleManager:SetParticleControlEnt(spikeParticle, 1, hero, 1, "follow_origin", hero:GetAbsOrigin(), true)
-
-		--setup cursor stream
-		ply.cursorStream = FlashUtil:RequestDataStream( "cursor_position_world", .01, hero:GetPlayerID(), function(playerID, cursorPos)
-			if not hero.orderDetected or not hero:IsAlive() then
-				return
-			elseif hero.justUsedAbility then
-				hero.justUsedAbility = false
-				hero.orderDetected = false
-				return
-			elseif hero.lastAutoMoveTime and GameRules:GetGameTime() - hero.lastAutoMoveTime < .05 then
-				hero.orderDetected = false
-				return
-			elseif hero.firstMoveOrder then
-				hero.firstMoveOrder = false
-				--print("firstMoveOrder")
-				hero.orderDetected = false
-				return
-			end
-			hero.orderDetected = false
-			--print("moveOrderDetected")
-
-
-			local validPos = true
-			if cursorPos.x > 30000 or cursorPos.y > 30000 or cursorPos.z > 30000 then
-				validPos = false
-			end
-			if validPos then
-				hero.currMoveDir = (cursorPos - hero:GetAbsOrigin()):Normalized()
-				hero.nextPos = cursorPos
-
-				Timers:RemoveTimer(hero.movementTimer)
-				hero.movementTimer = Timers:CreateTimer(function()
-					if not hero:IsAlive() then return nil end
-					local currPos = hero:GetAbsOrigin()
-					if IsPointWithinSquare(currPos, hero.nextPos, 10) or hero:IsIdle() then
-						hero.nextPos = currPos + hero.currMoveDir*500
-						if not GridNav:IsTraversable(hero.nextPos) then
-							--hero.nextPos = currPos + hero.currMoveDir*100
-						end
-						hero.lastAutoMoveTime = GameRules:GetGameTime()
-						ExecuteOrderFromTable({ UnitIndex = hero:GetEntityIndex(), OrderType = DOTA_UNIT_ORDER_MOVE_TO_POSITION, 
-							Position = hero.nextPos, Queue = false})
-						--print("moving.`")
-					end
-					return NEXT_FRAME
-				end)
-			end
-		end)
 	    InitAbilities(hero)
 		ply.firstTime = true
 	end
@@ -459,8 +465,11 @@ function ClearWormBody( hero )
 	PopupMinus(hero, #hero.body-1)
 	for i,segment in ipairs(hero.body) do
 		if segment ~= hero then
+			--local particle = ParticleManager:CreateParticle("particles/units/heroes/hero_phantom_assassin/phantom_assassin_crit_impact.vpcf", PATTACH_ABSORIGIN_FOLLOW, segment)
+			--ParticleManager:SetParticleControlEnt(particle, 1, segment, 1, "follow_origin", segment:GetAbsOrigin(), true)
 			PlayCentaurBloodEffect(segment)
 			ParticleManager:CreateParticle("particles/units/heroes/hero_life_stealer/life_stealer_open_wounds_blood_lastpool.vpcf", PATTACH_ABSORIGIN, segment)
+			--ParticleManager:CreateParticle("particles/units/heroes/hero_pudge/pudge_dismember.vpcf", PATTACH_ABSORIGIN, segment)
 			KillSegment(segment)
 		end
 	end
@@ -483,11 +492,9 @@ function KillWorm( hero, killer )
 	else
 		hero:SetTimeUntilRespawn(2)
 	end
-	--ParticleManager:CreateParticle(SheepDeathEffect, PATTACH_ABSORIGIN, hero)
-	--PlayCentaurBloodEffect(hero)
-	--ParticleManager:CreateParticle("particles/units/heroes/hero_huskar_temp/huskar_lifebreak_bloodyend.vpcf", PATTACH_OVERHEAD_FOLLOW, hero)
-	ParticleManager:CreateParticle("particles/units/heroes/hero_life_stealer/life_stealer_open_wounds_blood_lastpool.vpcf", PATTACH_ABSORIGIN, hero)
-	ParticleManager:CreateParticle("particles/units/heroes/hero_zuus/zuus_lightning_bolt.vpcf", PATTACH_WORLDORIGIN, hero)
+
+	local particle = ParticleManager:CreateParticle("particles/units/heroes/hero_phantom_assassin/phantom_assassin_crit_impact.vpcf", PATTACH_ABSORIGIN_FOLLOW, hero)
+	ParticleManager:SetParticleControlEnt(particle, 1, hero, 1, "follow_origin", hero:GetAbsOrigin(), true)
 
 	if hero.followParticle then
 		ParticleManager:DestroyParticle(hero.followParticle, true);
@@ -502,6 +509,7 @@ function KillWorm( hero, killer )
 	GlobalKillSoundPlayed = false
 	hero.lastAutoMoveTime = GameRules:GetGameTime()
 	hero:Stop()
+	Timers:RemoveTimer(hero.movementTimer)
 
 	-- remove the worm head segment dummy
 	hero.wormHeadDummy.makesWormDie = false
@@ -514,8 +522,8 @@ function KillWorm( hero, killer )
 		ReplaceAbility( hero, abilName, "wormwar_empty1" )
 	end
 
+	-- play the critter death sounds
 	-- store positions for sound dummies.
-	-- #yolo
 	local positions = {}
 	for i=#hero.body-1, 1, -1 do
 		table.insert(positions, 1, hero.body[i]:GetAbsOrigin())
@@ -539,8 +547,8 @@ function KillWorm( hero, killer )
 	hero:SetRespawnPosition(FindGoodPosition("worm"))
 
 	hero:ForceKill(true)
-
 	ClearWormBody(hero)
+	hero.outOfBounds = false
 	hero.score = 0
 
 end
@@ -563,9 +571,6 @@ function AddSegments( hero, foodAmount )
 		local col = WormWar:ColorForPlayer(hero.plyID)
 		segment:SetRenderColor(col[1], col[2], col[3])
 
-		--segment.spikeParticle = ParticleManager:CreateParticle("particles/segment/segment.vpcf", PATTACH_ABSORIGIN_FOLLOW, segment)
-		--ParticleManager:SetParticleControlEnt(segment.spikeParticle, 1, segment, 1, "follow_origin", segment:GetAbsOrigin(), true)
-
 		Physics:Unit(segment)
 		segment:SetBaseMoveSpeed(hero:GetBaseMoveSpeed())
 		table.insert(hero.body, 1, segment)
@@ -583,7 +588,6 @@ function AddSegments( hero, foodAmount )
 
 	end
 	PopupGoldGain(hero, foodAmount)
-	--PopupHealing(hero, foodAmount)
 end
 
 function WormWar:PlayerSay( keys )
@@ -808,6 +812,7 @@ function WormWar:OnTeamKillCredit(keys)
 	local killerTeamNumber = keys.teamnumber
 end
 
+
 -- An entity died
 function WormWar:OnEntityKilled( keys )
 	--print( '[WORMWAR] OnEntityKilled Called' )
@@ -821,19 +826,7 @@ function WormWar:OnEntityKilled( keys )
 	end
 
 	if killed.wormWarUnit then
-		-- spawn another unit a bit after.
-		Timers:CreateTimer(RandomFloat(5, 9), function()
-			local pos = GetRandomPos()
-			local unitName = GetRandomUnit()
-			if unitName == "rune" then
-				spawn_rune(pos)
-			elseif unitName == "inferno" then
-				pos = FindGoodPosition("inferno")
-				Creep:Init("inferno", pos)
-			else
-				Creep:Init(unitName, pos)
-			end
-		end)
+		SpawnWormWarUnit(true)
 	end
 
 	if killed:IsRealHero() then
@@ -843,10 +836,32 @@ function WormWar:OnEntityKilled( keys )
 	-- Put code here to handle when an entity gets killed
 end
 
+function SpawnWormWarUnit( waitTillSpawn )
+	WormWarUnitCount = WormWarUnitCount - 1
+	--print("in entitykilled, WormWarUnitCount: " .. WormWarUnitCount)
+	-- spawn another unit a bit after.
+	local timeTillSpawn = RandomFloat(3, 6)
+	if not waitTillSpawn then
+		timeTillSpawn = 0
+	end
+	Timers:CreateTimer(timeTillSpawn, function()
+		local pos = GetRandomPos()
+		local unitName = GetRandomUnit()
+		if unitName == "rune" then
+			spawn_rune(pos)
+		elseif unitName == "inferno" then
+			pos = FindGoodPosition("inferno")
+			Creep:Init("inferno", pos)
+		else
+			Creep:Init(unitName, pos)
+		end
+	end)
+end
+
 function FindGoodPosition(unitName)
 	local pointNotGood = true
 	local offset = 0
-	if unitName == "worm" then
+	if unitName == "worm" or unitName == "info_player_start" then
 		offset = 500 -- dont spawn worms right next to border.
 	end
 	local pos = GetRandomPos({[1]=offset})
@@ -874,6 +889,9 @@ function FindGoodPosition(unitName)
 			end
 		end
 		pos = GetRandomPos({[1]=offset})
+	end
+	if unitName == "worm" then
+		--print("new pos for worm: " .. VectorString(pos))
 	end
 	return pos
 end
@@ -925,11 +943,21 @@ function WormWar:InitWormWar()
 	Convars:RegisterCommand( "command_example", Dynamic_Wrap(WormWar, 'ExampleConsoleCommand'), "A console command example", 0 )
 	Convars:RegisterCommand('force_next_rune', function(...)
 		local args = {...}
-		PrintTable(args)
 		table.remove(args,1)
 		local cmdPlayer = Convars:GetCommandClient()
 		ForceNextRune = args[1]
 		print("ForceNextRune: " .. ForceNextRune)
+	end, 'Goo_Bomb,Fiery_Jaw,Segment_Bomb,Crypt_Craving,Reverse', 0)
+
+	Convars:RegisterCommand('test_worm_spawns', function(...)
+		local args = {...}
+		table.remove(args,1)
+		local cmdPlayer = Convars:GetCommandClient()
+		for i=1,400 do
+			local pos = FindGoodPosition("worm")
+			DebugDrawCircle(pos, Vector(0,255,0), 60, 10, true, 4000)
+		end
+
 	end, 'Goo_Bomb,Fiery_Jaw,Segment_Bomb,Crypt_Craving,Reverse', 0)
 
 	Convars:RegisterCommand('unload_and_restart', function(...)
@@ -1098,7 +1126,7 @@ function WormWar:CaptureWormWar()
 		mode:SetBuybackEnabled( false )
 		mode:SetTopBarTeamValuesOverride ( true )
 		mode:SetTopBarTeamValuesVisible( false )
-		mode:SetFogOfWarDisabled(true)
+		--mode:SetFogOfWarDisabled(true)
 		mode:SetGoldSoundDisabled( true )
 		--mode:SetRemoveIllusionsOnDeath( true )
 
@@ -1209,6 +1237,8 @@ function Creep:Init(name, loc)
 	unit.pos = unit:GetAbsOrigin()
 	unit.nextPos = unit:GetAbsOrigin()
 	unit.wormWarUnit = true
+	WormWarUnitCount = WormWarUnitCount + 1
+	--print("in creep:init, WormWarUnitCount: " .. WormWarUnitCount)
 
 	if name == "pig" then
 		unit.isFood = true
@@ -1255,7 +1285,6 @@ function Creep:Init(name, loc)
 				unit.makesWormDie = false
 			else
 				PlayCentaurBloodEffect(unit)
-				--ParticleManager:CreateParticle("particles/units/heroes/hero_life_stealer/life_stealer_open_wounds_blood_lastpool.vpcf", PATTACH_ABSORIGIN, unit)
 				unit.isFood = false
 			end
 			ParticleManager:CreateParticle("particles/units/heroes/hero_zuus/zuus_static_field.vpcf", PATTACH_OVERHEAD_FOLLOW, unit)
@@ -1327,7 +1356,8 @@ function spawn_rune( point )
 	rune.isRune = true
 	rune.wormWarUnit = true
 	rune.runeType = WormWar.runeTypes[RandomInt(1,#WormWar.runeTypes)]
-	rune:EmitSound("General.Illusion.Create")
+	WormWarUnitCount = WormWarUnitCount + 1
+	Timers:CreateTimer(.05, function() rune:EmitSound("General.Illusion.Create") end)
 end
 
 function GetRandomPos(...)
@@ -1336,6 +1366,7 @@ function GetRandomPos(...)
 	if ... then
 		offset = (...)[1]
 	end
+	--print("offset is " .. offset)
 	local spawn_x = RandomInt(Bounds.min+offset, Bounds.max-offset)
 	local spawn_y = RandomInt(Bounds.min+offset, Bounds.max-offset)
 	local pos = Vector(spawn_x, spawn_y, 0)
@@ -1362,22 +1393,25 @@ function GetRandomUnit(  )
 end
 
 function OnHeroOutOfBounds( hero )
-	--local effectDum = CreateUnitByName("dummy", hero:GetAbsOrigin(), false, nil, nil, hero:GetTeam())
-	--ParticleManager:CreateParticle("particles/units/heroes/hero_zuus/zuus_thundergods_wrath_start_bolt_parent.vpcf", PATTACH_OVERHEAD_FOLLOW, effectDum) 
 	hero:EmitSound("Hero_Zuus.ArcLightning.Target")
+	EmitGlobalSound("Noob01")
+	GlobalKillSoundPlayed = true
+
+	ParticleManager:CreateParticle("particles/units/heroes/hero_zuus/zuus_lightning_bolt.vpcf", PATTACH_ABSORIGIN, hero)
 
 	for i=#hero.body, 1, -1 do
 		if i ~= 1 then
 			local segment = hero.body[i]
 			local nextSegment = hero.body[i-1]
-			local bolt = ParticleManager:CreateParticle("particles/units/heroes/hero_zuus/zuus_arc_lightning.vpcf", PATTACH_OVERHEAD_FOLLOW, segment) 
+			local bolt = ParticleManager:CreateParticle("particles/units/heroes/hero_zuus/zuus_arc_lightning.vpcf", PATTACH_OVERHEAD_FOLLOW, segment)
 			ParticleManager:SetParticleControl(bolt, 1, nextSegment:GetAbsOrigin())
 		end
 	end
 
-	EmitGlobalSound("Noob01")
-	GlobalKillSoundPlayed = true
+	hero.outOfBounds = true
+
 	KillWorm(hero, hero)
+
 	GameRules:SendCustomMessage(ColorIt(hero.playerName, hero.colStr) .. " just ran into a wall!", 0, 0)
 end
 
@@ -1387,36 +1421,35 @@ function InitMap(  )
 
 	-- determine the bounds for the map
 	DarkSeerWallIndex = 1
-	NumUnits = 40
+	if Testing then PlayerCount = 6 end
+	NumUnits = 30 -- increase by 35 each interval?
 	if PlayerCount <= 3 then
 		Bounds = {max = 2016}
 	elseif PlayerCount <= 6 then
 		Bounds = {max = 4032}
 		DarkSeerWallIndex = 2
-		NumUnits = 70
+		NumUnits = 60
 	elseif PlayerCount <= 9 then
 		Bounds = {max = 6048}
 		DarkSeerWallIndex = 3
-		NumUnits = 100
+		NumUnits = 90
 	elseif PlayerCount <= 12 then
 		Bounds = {max = 8064}
 		DarkSeerWallIndex = 4
-		NumUnits = 130
+		NumUnits = 120
 	end
 	Bounds.min = -1*Bounds.max
+	WormWarUnitCount = 0
 
 	Pillars = {}
 	PillarParticles = {}
-	--PillarLinkParticles = {}
 	-- move the pillars in the correct pos based off PlayerCount
 	for i=1,4 do
 		table.insert(Pillars, Entities:FindByName(nil, "pillar_" .. i))
 		table.insert(PillarParticles, Entities:FindByName(nil, "pillar_" .. i .. "_particle"))
-		--table.insert(PillarLinkParticles, Entities:FindByName(nil, "pillar_" .. i .. "_particle_2"))
-		local z = GlobalDummy.z
+		local z = GetGroundPosition(Pillars[1]:GetAbsOrigin(), Pillars[1]).z
 
 		-- spawn them, start from top right, go counter-cw
-		--local newPos = Vector(Bounds.max, Bounds.max,z)
 		local offset = 40
 		if i == 1 then
 			Pillars[1]:SetAbsOrigin(Vector(Bounds.max+offset, Bounds.max+offset,z))
@@ -1429,16 +1462,29 @@ function InitMap(  )
 		end
 		local newPos = Pillars[i]:GetAbsOrigin()
 		PillarParticles[i]:SetAbsOrigin(Vector(newPos.x, newPos.y, newPos.z+300))
-		--PillarLinkParticles[i]:SetAbsOrigin(Vector(newPos.x, newPos.y, newPos.z+300))
 	end
 
-	Timers:CreateTimer(function()
-		for i=1,3 do
-			local bolt = ParticleManager:CreateParticle("particles/units/heroes/hero_zuus/zuus_arc_lightning.vpcf", PATTACH_OVERHEAD_FOLLOW, Pillars[i]) 
-			ParticleManager:SetParticleControl(bolt, 1, Pillars[i+1]:GetAbsOrigin())
+	VisionDummies = {GoodGuys = {}, BadGuys = {}}
+	local timeOffset = .03
+	-- CREATE vision dummies
+	local offset = 1800 --528
+	for y=Bounds.max, Bounds.min-1000, -1*offset do
+		for x=Bounds.min, Bounds.max+1000, offset do
+			Timers:CreateTimer(timeOffset, function()
+				--if GridNav:IsTraversable(Vector(x,y,GlobalDummy.z)) and not GridNav:IsBlocked(Vector(x,y,GlobalDummy.z)) then
+				local goodguy = CreateUnitByName("vision_dummy", Vector(x,y,GlobalDummy.z), false, nil, nil, DOTA_TEAM_GOODGUYS)
+				local badguy = CreateUnitByName("vision_dummy", Vector(x,y,GlobalDummy.z), false, nil, nil, DOTA_TEAM_BADGUYS)
+				goodguy.isVisionDummy = true
+				badguy.isVisionDummy = true
+				table.insert(VisionDummies.GoodGuys, goodguy)
+				table.insert(VisionDummies.BadGuys, badguy)
+				--DebugDrawCircle(Vector(x,y,GlobalDummy.z), Vector(0,0,255), 10, 1800, true, 4000)
+				--end
+			end)
+			timeOffset = timeOffset + .03
 		end
-		return .5
-	end)
+	end
+
 
 	if Testing then
 		local center = GetGroundPosition(Vector(0,0,0), GlobalDummy)
@@ -1499,13 +1545,15 @@ function InitMap(  )
 		ent:SetAbsOrigin(pos)
 	end
 
-	for k,ply in pairs(WormWar.vPlayers) do
-		if ply ~= nil then
-			local hero = CreateHeroForPlayer("npc_dota_hero_nyx_assassin", ply)
+	--Timers:CreateTimer(1, function()
+		for k,ply in pairs(WormWar.vPlayers) do
+			if ply ~= nil then
+				local hero = CreateHeroForPlayer("npc_dota_hero_nyx_assassin", ply)
+			end
 		end
-	end
+		print("initMap complete.")
+	--end)
 
-	print("initMap complete.")
 	WormWar.initMap = true
 end
 

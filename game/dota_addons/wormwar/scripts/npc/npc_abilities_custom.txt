@@ -576,6 +576,35 @@
 		}
 	}
 
+	"sheep_death_effect"
+	{
+		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_IMMEDIATE"
+		"BaseClass"						"ability_datadriven"
+		"AbilityTextureName"			"wormwar_empty3"
+
+		// Stats
+		//-------------------------------------------------------------------------------------------------------------
+		"AbilityCastPoint"				"0"
+		"AbilityCooldown"				"0"
+		"MaxLevel"						"1"
+		"AbilityManaCost"				"0"
+		
+		"OnSpellStart"
+		{
+			"FireEffect"
+			{
+				"EffectName"	"particles/units/heroes/hero_phantom_assassin/phantom_assassin_crit_impact.vpcf"
+				"EffectAttachType"	"start_at_customorigin"
+				
+				"ControlPointEntities"
+				{
+					"TARGET"	"follow_origin"
+					"TARGET"	"follow_origin"
+				}
+			}
+		}
+	}
+
 	"sheep_passive"
 	{
 		"BaseClass"             		"ability_datadriven"

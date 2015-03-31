@@ -1,8 +1,11 @@
 function worm_on_order( keys )
 	-- wait a frame to detect if it was an ability cast order
 	keys.caster.orderDetected = true
-	--print("worm_on_order")
-	--keys.caster.inContinuousMovement = false
+	if not keys.caster.firstOrder then
+		keys.caster.firstOrder = true
+	elseif keys.caster.firstOrder and not keys.caster.secondOrder then
+		keys.caster.secondOrder = true
+	end
 end
 
 -- RUNE ACTIVATION ABILS
@@ -165,6 +168,8 @@ function Crypt_Craving( keys )
 					end
 					ent.foodAmount = nil
 					ParticleManager:DestroyParticle(ent.craveParticle, true);
+					-- create blood pool
+					ParticleManager:CreateParticle("particles/units/heroes/hero_life_stealer/life_stealer_open_wounds_blood_lastpool.vpcf", PATTACH_ABSORIGIN, ent)
 					-- death effect
 					if not hero.playCryptDeath then
 						ParticleManager:CreateParticle("particles/units/heroes/hero_life_stealer/life_stealer_infest_emerge_bloody.vpcf", PATTACH_ABSORIGIN_FOLLOW, hero)
@@ -204,6 +209,9 @@ function Reverse( keys )
 		ReplaceAbility( caster, "Reverse", "wormwar_empty1" )
 		-- just make him face the opposite direction.
 		hero:SetForwardVector(-1*hero:GetForwardVector())
+		hero.nextPos = hero:GetAbsOrigin() + hero:GetForwardVector()*500
+		hero.currMoveDir = hero:GetForwardVector()
+		hero:Stop()
 		return
 	end
 
@@ -230,16 +238,8 @@ function Reverse( keys )
 	hero:Stop()
 	hero:SetForwardVector(newDir)
 	hero.justUsedReverse = true
-	--hero:MoveToPosition(hero:GetAbsOrigin() + newDir*200)
-	--local nextPos = hero:GetAbsOrigin() + newDir*500
 	hero.currMoveDir = newDir
 	hero.nextPos = hero:GetAbsOrigin() + newDir*500
-	--ExecuteOrderFromTable({ UnitIndex = hero:GetEntityIndex(), OrderType = DOTA_UNIT_ORDER_MOVE_TO_POSITION,
-	--	Position = nextPos, Queue = false})
-
-	--[[if not Testing then
-		MovePlayerCameraToPos( hero, hero.nextPos, true )
-	end]]
 
 	Timers:CreateTimer(.03, function()
 		hero.justUsedReverse = false
