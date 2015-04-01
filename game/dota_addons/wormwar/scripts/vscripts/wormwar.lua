@@ -248,7 +248,7 @@ function WormWar:OnWormInGame(hero)
 						hero:EmitSound("Bottle.Cork")
 						--EmitSoundOnClient("Bottle.Cork", hero.player)
 						ent.isRune = false;
-						if RandomInt(1, 100) <= 33 then
+						if RandomInt(1, 100) <= 25 then
 							SpawnWormWarUnit(true, "rune") -- helps maintain rune count.
 						else
 							SpawnWormWarUnit(true, nil)
@@ -844,7 +844,7 @@ function WormWar:OnEntityKilled( keys )
 	end
 
 	if killed.wormWarUnit then
-		if killed:GetUnitName() == "inferno" and RandomInt(1, 100) <= 33 then -- helps maintain inferno count.
+		if killed:GetUnitName() == "inferno" and RandomInt(1, 100) <= 25 then -- helps maintain inferno count.
 			SpawnWormWarUnit(true, "inferno")
 		else
 			SpawnWormWarUnit(true, nil)
