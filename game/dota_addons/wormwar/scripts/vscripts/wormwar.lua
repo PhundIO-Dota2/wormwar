@@ -248,7 +248,11 @@ function WormWar:OnWormInGame(hero)
 						hero:EmitSound("Bottle.Cork")
 						--EmitSoundOnClient("Bottle.Cork", hero.player)
 						ent.isRune = false;
-						SpawnWormWarUnit(true)
+						if RandomInt(1, 100) <= 33 then
+							SpawnWormWarUnit(true, "rune") -- helps maintain rune count.
+						else
+							SpawnWormWarUnit(true, nil)
+						end
 						ent:RemoveSelf()
 						-- set it underground
 						--[[local p = ent:GetAbsOrigin()
@@ -840,7 +844,11 @@ function WormWar:OnEntityKilled( keys )
 	end
 
 	if killed.wormWarUnit then
-		SpawnWormWarUnit(true)
+		if killed:GetUnitName() == "inferno" and RandomInt(1, 100) <= 33 then -- helps maintain inferno count.
+			SpawnWormWarUnit(true, "inferno")
+		else
+			SpawnWormWarUnit(true, nil)
+		end
 	end
 
 	if killed:IsRealHero() then
@@ -850,7 +858,7 @@ function WormWar:OnEntityKilled( keys )
 	-- Put code here to handle when an entity gets killed
 end
 
-function SpawnWormWarUnit( waitTillSpawn )
+function SpawnWormWarUnit( waitTillSpawn, unitName )
 	WormWarUnitCount = WormWarUnitCount - 1
 	--print("in entitykilled, WormWarUnitCount: " .. WormWarUnitCount)
 	-- spawn another unit a bit after.
@@ -860,7 +868,9 @@ function SpawnWormWarUnit( waitTillSpawn )
 	end
 	Timers:CreateTimer(timeTillSpawn, function()
 		local pos = GetRandomPos()
-		local unitName = GetRandomUnit()
+		if not unitName then
+			unitName = GetRandomUnit()
+		end
 		if unitName == "rune" then
 			spawn_rune(pos)
 		elseif unitName == "inferno" then
