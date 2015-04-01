@@ -27,8 +27,6 @@ function Goo_Bomb( keys )
 				
 				-- create goo effect
 				ParticleManager:CreateParticle("particles/units/heroes/hero_bristleback/bristleback_loadout.vpcf", PATTACH_ABSORIGIN_FOLLOW, hero)
-
-				--particles/units/heroes/hero_bristleback/bristleback_viscous_nasal_goo_debuff.vpcf
 				hero.gooParticle = ParticleManager:CreateParticle("particles/units/heroes/hero_bristleback/bristleback_viscous_nasal_goo_debuff.vpcf",
 					PATTACH_ABSORIGIN_FOLLOW, hero)
 
@@ -52,9 +50,9 @@ function Fiery_Jaw( keys )
 
 	-- play effects
 	if not hero.fieryJawParticle then
-		--particles/econ/items/lina/lina_head_headflame/lina_flame_hand_dual_headflame.vpcf
-		hero.fieryJawParticle = ParticleManager:CreateParticle("particles/econ/items/lina/lina_head_headflame/lina_flame_hand_dual_headflame.vpcf", 
-			PATTACH_OVERHEAD_FOLLOW, hero)
+		--hero.fieryJawParticle = ParticleManager:CreateParticle("particles/econ/items/lina/lina_head_headflame/lina_flame_hand_dual_headflame.vpcf", 
+		--	PATTACH_OVERHEAD_FOLLOW, hero)
+		hero.fieryJawParticle = ParticleManager:CreateParticle("particles/units/heroes/hero_axe/axe_battle_hunger.vpcf", PATTACH_OVERHEAD_FOLLOW, hero)
 		hero:EmitSound("DOTA_Item.SoulRing.Activate")
 	end
 

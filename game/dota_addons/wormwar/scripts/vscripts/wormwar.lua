@@ -109,6 +109,8 @@ function WormWar:OnWormInGame(hero)
 				[3] =  ColorIt(" ", "green")
 			}
 			EmitGlobalSound("Wormtastic01")
+			local winnerParticle = ParticleManager:CreateParticle("particles/units/heroes/hero_legion_commander/legion_commander_duel_victory.vpcf", PATTACH_OVERHEAD_FOLLOW, hero)
+
 			self.gameOver = true
 			Winner = hero
 			PlayEndingCinematic()
@@ -173,8 +175,11 @@ function WormWar:OnWormInGame(hero)
 									GameRules:SendCustomMessage(ColorIt(hero2.playerName, hero2.colStr) .. " just squished " .. 
 										ColorIt(hero.playerName, hero.colStr) .. "!", 0, 0)
 									hero2.killStreak = hero2.killStreak + 1
-
-									PerformKillBanner(hero2.killStreak)
+									local hero2Pos = hero2:GetAbsOrigin()
+									local squishParticle = ParticleManager:CreateParticle("particles/squish_text/tusk_walruspunch_txt_ult.vpcf", PATTACH_ABSORIGIN, hero)
+									ParticleManager:SetParticleControl( squishParticle, 2, hero:GetAbsOrigin() )
+									--tusk_walruspunch_txt_ult.vpcf
+									--PerformKillBanner(hero2.killStreak)
 
 									hero2.lastSquishTime = currTime
 									-- get % of segments
@@ -186,7 +191,7 @@ function WormWar:OnWormInGame(hero)
 							if not hero.dontKill then
 								KillWorm(hero)
 								if not self.firstBlood then
-									PopupKillbanner(hero2, "firstblood")
+									--PopupKillbanner(hero2, "firstblood")
 									self.firstBlood = true
 								end
 							else
@@ -1304,6 +1309,9 @@ function Creep:Init(name, loc)
 				unit.isFood = false
 			end
 			ParticleManager:CreateParticle("particles/units/heroes/hero_zuus/zuus_static_field.vpcf", PATTACH_OVERHEAD_FOLLOW, unit)
+			local bolt = ParticleManager:CreateParticle("particles/units/heroes/hero_zuus/zuus_thundergods_wrath_start_bolt_parent.vpcf", PATTACH_ABSORIGIN, unit)
+			ParticleManager:SetParticleControlEnt(bolt, 1, unit, 1, "follow_origin", unit:GetAbsOrigin(), true)
+
 			unit:EmitSound("Hero_Zuus.ArcLightning.Target")
 			unit:ForceKill(true)
 			return
@@ -1369,8 +1377,9 @@ end
 function spawn_rune( point )
 
 	local rune = CreateUnitByName("rune", point, true, nil, nil, DOTA_TEAM_NEUTRALS)
-	ParticleManager:CreateParticle("particles/generic_hero_status/hero_levelup_copy.vpcf", PATTACH_ABSORIGIN, rune)
-	--particles/generic_hero_status/hero_levelup_copy.vpcf
+	local runeParticle = ParticleManager:CreateParticle("particles/generic_gameplay/rune_illusion.vpcf", PATTACH_CUSTOMORIGIN, rune)
+	local runePos = rune:GetAbsOrigin()
+	ParticleManager:SetParticleControl(runeParticle, 0, Vector(runePos.x, runePos.y, runePos.z+20))
 	rune.isRune = true
 	rune.wormWarUnit = true
 	rune.runeType = WormWar.runeTypes[RandomInt(1,#WormWar.runeTypes)]
@@ -1415,7 +1424,8 @@ function OnHeroOutOfBounds( hero )
 	EmitGlobalSound("Noob01")
 	GlobalKillSoundPlayed = true
 
-	ParticleManager:CreateParticle("particles/units/heroes/hero_zuus/zuus_lightning_bolt.vpcf", PATTACH_ABSORIGIN, hero)
+	local bolt = ParticleManager:CreateParticle("particles/units/heroes/hero_zuus/zuus_thundergods_wrath_start_bolt_parent.vpcf", PATTACH_ABSORIGIN, hero)
+	ParticleManager:SetParticleControlEnt(bolt, 1, hero, 1, "follow_origin", hero:GetAbsOrigin(), true)
 
 	for i=#hero.body, 1, -1 do
 		if i ~= 1 then
