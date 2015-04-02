@@ -47,4 +47,7 @@
     "show_banner"
     {
     }
+    "turn_off_waitforplayers"
+    {
+    }
 }

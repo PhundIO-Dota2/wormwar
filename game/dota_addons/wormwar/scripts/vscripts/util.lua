@@ -92,7 +92,7 @@ function InitAbilities( hero )
 	for i=0, hero:GetAbilityCount()-1 do
 		local abil = hero:GetAbilityByIndex(i)
 		if abil ~= nil then
-			if hero:GetAbilityPoints() > 0 then
+			if hero:IsRealHero() and hero:GetAbilityPoints() > 0 then
 				hero:UpgradeAbility(abil)
 			else
 				abil:SetLevel(1)

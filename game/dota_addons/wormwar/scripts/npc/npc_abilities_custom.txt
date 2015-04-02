@@ -5,6 +5,104 @@
 {
 	"Version"		"1"
 
+	"summon_segment_caster_dummy"
+	{
+		"BaseClass"             		"ability_datadriven"
+		//"AbilityTextureName"			"archmage_summon_water_elemental"
+		"MaxLevel" 						"1"
+	
+		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_NO_TARGET"
+		"AbilityCooldown"				"0"
+		"AbilityManaCost"				"0"
+	
+		"AbilitySpecial"
+		{
+			"01"
+			{
+				"var_type"				"FIELD_INTEGER"
+				"duration"				"60"
+			}	
+		}
+	
+		//"precache"
+		//{
+		//	"particle"					"particles/units/heroes/hero_morphling/morphling_replicate_finish.vpcf"
+		//	"soundfile"					"soundevents/game_sounds_heroes/game_sounds_morphling.vsndevts"
+		//}
+	
+		"OnSpellStart"
+		{
+			"SpawnUnit"
+			{
+				"UnitName"		"segment_caster_dummy"
+				"UnitCount"		"1"
+				"SpawnRadius"	"50"
+				//"Duration"		"%duration"
+				"Target"		"POINT"
+				//"GrantsGold" 	"1"
+		        //"GrantsXP" 		"1"
+				"OnSpawn"
+				{
+					"RunScript"
+					{
+						"ScriptFile"	"scripts/vscripts/abilities.lua"
+						"Function"		"OnSegmentCasterDummySummoned"
+					}
+				}
+			}
+		}
+	}
+
+	"summon_segment"
+	{
+		"BaseClass"             		"ability_datadriven"
+		//"AbilityTextureName"			"archmage_summon_water_elemental"
+		"MaxLevel" 						"1"
+	
+		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_POINT | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING"
+		"AbilityCooldown"				"0"
+		"AbilityManaCost"				"0"
+		"AbilityCastRange"				"20000"
+		"AbilityCastPoint"				"0"
+	
+		"AbilitySpecial"
+		{
+			"01"
+			{
+				"var_type"				"FIELD_INTEGER"
+				"duration"				"60"
+			}	
+		}
+	
+		//"precache"
+		//{
+		//	"particle"					"particles/units/heroes/hero_morphling/morphling_replicate_finish.vpcf"
+		//	"soundfile"					"soundevents/game_sounds_heroes/game_sounds_morphling.vsndevts"
+		//}
+	
+		"OnSpellStart"
+		{
+			"SpawnUnit"
+			{
+				"UnitName"		"segment"
+				"UnitCount"		"1"
+				"SpawnRadius"	"50"
+				//"Duration"		"%duration"
+				"Target"		"POINT"
+				//"GrantsGold" 	"1"
+		        //"GrantsXP" 		"1"
+				"OnSpawn"
+				{
+					"RunScript"
+					{
+						"ScriptFile"	"scripts/vscripts/abilities.lua"
+						"Function"		"OnSegmentSummoned"
+					}
+				}
+			}
+		}
+	}
+
 	"Reverse"
 	{
 		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_IMMEDIATE"

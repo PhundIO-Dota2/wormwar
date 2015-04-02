@@ -32,6 +32,7 @@
 			
 			this.gameAPI.SubscribeToGameEvent("show_main_ability", showMainAbility);
 			this.gameAPI.SubscribeToGameEvent("show_banner", showBanner);
+			this.gameAPI.SubscribeToGameEvent("turn_off_waitforplayers", turnOffWaitForPlayers);
 
 			this.addChild(holder);
 			
@@ -55,7 +56,7 @@
 
 			//pass the gameAPI on to the modules
 			this.scoreBoard.setup(this.gameAPI, this.globals);
-			trace("scoreBoard.setup called.");
+			this.waitForPlayers.setup(this.gameAPI, this.globals);
 			
 			//this is not needed, but it shows you your UI has loaded (needs 'scaleform_spew 1' in console)
 			trace("[CustomUI] OnLoaded finished!");
@@ -87,6 +88,11 @@
 			{
 				showAbilityButton();
 			}
+		}
+
+		public function turnOffWaitForPlayers(args:Object) : void {
+			this.waitForPlayers.visible = false
+
 		}
 
 		public function showAbilityButton(): void {
@@ -135,6 +141,7 @@
 					
 			//pass the resize event to our module, we pass the width and height of the screen, as well as the INVERSE of the stage scaling ratios.
 			this.scoreBoard.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
+			this.waitForPlayers.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
 		}
 	}
 }

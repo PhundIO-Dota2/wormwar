@@ -1,3 +1,49 @@
+function OnSegmentSummoned( keys )
+	local segmentCasterDummy = keys.caster
+	local worm = segmentCasterDummy.worm
+	local hero = worm
+	local segment = keys.target
+
+	segment:SetOwner(hero)
+	InitAbilities(segment)
+	segment.makesWormDie = true
+	segment.isSegment = true
+	segment.hero = hero
+
+	segment.spikeParticle = ParticleManager:CreateParticle("particles/spikes/nyx_assassin_spiked_carapace_b.vpcf", PATTACH_ABSORIGIN_FOLLOW, segment)
+	ParticleManager:SetParticleControlEnt(segment.spikeParticle, 1, segment, 1, "follow_origin", segment:GetAbsOrigin(), true)
+
+	local col = WormWar:ColorForPlayer(hero.plyID)
+	segment:SetRenderColor(col[1], col[2], col[3])
+
+	Physics:Unit(segment)
+	segment:SetBaseMoveSpeed(hero:GetBaseMoveSpeed())
+	table.insert(hero.body, 1, segment)
+
+	local numSegments = #hero.body-1
+	if SEGMENTS_TO_WIN-10 == numSegments then
+		EmitGlobalSound("Warning10SegmentsRemaining01")
+		hero.followParticle = ParticleManager:CreateParticle("particles/infest_icon/life_stealer_infested_unit.vpcf", PATTACH_OVERHEAD_FOLLOW, hero)
+		hero.almostWon = true
+		local pos = hero:GetAbsOrigin()
+		--ShowCenterMsg(hero.playerName .. " needs only 10 segments to win!", 2)
+		Say(nil, hero.colHex .. hero.playerName .. COLOR_NONE .. "needs only " .. COLOR_ORANGE .. "10 segments to win! " ..
+			COLOR_RED .. "SQUISH HIM!!", false)
+
+	end
+
+end
+
+function OnSegmentCasterDummySummoned( keys )
+	print("OnSegmentCasterDummySummoned")
+	--DeepPrintTable(keys)
+	if keys.target:GetUnitName() == "segment_caster_dummy" then
+		print("Found segment_caster_dummy")
+		keys.caster.segmentCasterDummy = keys.target
+		keys.caster.segmentCasterDummy.worm = keys.caster
+	end
+end
+
 function worm_on_order( keys )
 	-- wait a frame to detect if it was an ability cast order
 	keys.caster.orderDetected = true
@@ -91,7 +137,7 @@ function Segment_Bomb( keys )
 	for _,hero in ipairs(WormWar.vHeroes) do
 		if caster ~= hero then
 			local numSegments = #hero.body-1
-			local percent = math.ceil(numSegments*.20)
+			local percent = math.ceil(numSegments*.15)
 			for i=1,percent do
 				local segment = hero.body[1]
 				table.remove(hero.body, 1)

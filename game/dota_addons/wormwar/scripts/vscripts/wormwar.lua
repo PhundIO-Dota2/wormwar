@@ -136,7 +136,7 @@ function WormWar:OnWormInGame(hero)
 				local entPos = ent:GetAbsOrigin()
 				local collided = false
 				if ent.GetPaddedCollisionRadius ~= nil then
-					collided = circle_circle_collision(heroPos, entPos, hero.rad, ent:GetPaddedCollisionRadius())
+					collided = circle_circle_collision(heroPos, entPos, hero.wormHeadDummy.rad, ent:GetPaddedCollisionRadius())
 				end
 
 				if collided then
@@ -248,7 +248,7 @@ function WormWar:OnWormInGame(hero)
 						hero:EmitSound("Bottle.Cork")
 						--EmitSoundOnClient("Bottle.Cork", hero.player)
 						ent.isRune = false;
-						if RandomInt(1, 100) <= 25 then
+						if RandomInt(1, 100) <= 20 then
 							SpawnWormWarUnit(true, "rune") -- helps maintain rune count.
 						else
 							SpawnWormWarUnit(true, nil)
@@ -328,11 +328,11 @@ function WormWar:OnWormInGame(hero)
 				end
 			else
 				timesDeltaWasNotZero = timesDeltaWasNotZero + 1
-				if hero.inContinuousMovement and timesDeltaWasNotZero > 2 then
+				if (hero.inContinuousMovement and timesDeltaWasNotZero > 2) then --hero:IsIdle()
 					timesDeltaWasZero = 0
 					hero.inContinuousMovement = false
 				end
-				if not hero.firstForwardChange and timesDeltaWasNotZero > 2 then
+				if not hero.firstForwardChange and timesDeltaWasNotZero > 2 and not hero.justUsedAbility then
 					--print("hero.firstForwardChange")
 					hero.firstForwardChange = true
 				end
@@ -347,6 +347,11 @@ function WormWar:OnWormInGame(hero)
 			end
 
 			hero.lastForward = currForward
+
+			if hero.justUsedAbility then
+				hero.justUsedAbility = false
+			end
+
 			return .03
 		end)
 	end
@@ -406,7 +411,6 @@ function WormWar:OnWormInGame(hero)
 	-- generic stuff for worms when they're in the game for the first time, OR they respawn
 	hero.isWorm = true;
 	hero.score = 0
-	hero.rad = 60 -- lil below ring radius
 	hero.body = {[1] = hero}
 	hero.lastCameraUpdateTime = GameRules:GetGameTime()
 	hero.lastSquishTime = -50
@@ -417,10 +421,13 @@ function WormWar:OnWormInGame(hero)
 	local wormHeadDummy = CreateUnitByName("segment", hero:GetAbsOrigin(), false, nil, hero, hero:GetTeam())
 	wormHeadDummy.isWormHeadDummy = true
 	wormHeadDummy.hero = hero
+	print("hero:GetPaddedCollisionRadius(): " .. hero:GetPaddedCollisionRadius())
+	wormHeadDummy.rad = hero:GetPaddedCollisionRadius() + 20
 	wormHeadDummy.makesWormDie = true
 	wormHeadDummy.isSegment = true
 	wormHeadDummy:SetOriginalModel("models/development/invisiblebox.vmdl")
 	wormHeadDummy:SetModel("models/development/invisiblebox.vmdl")
+	InitAbilities(wormHeadDummy)
 	hero.wormHeadDummy = wormHeadDummy
 
 	-- Do first time stuff for this player.
@@ -451,10 +458,6 @@ function WormWar:OnWormInGame(hero)
 
 		-- Show a popup with game instructions.
 	    ShowGenericPopupToPlayer(hero.player, "#wormwar_instructions_title", "#wormwar_instructions_body", "", "", DOTA_SHOWGENERICPOPUP_TINT_SCREEN )
-		
-		Timers:CreateTimer(NEXT_FRAME, function()
-			AddSegments(hero, 1)
-		end)
 
 		FireGameEvent("cgm_scoreboard_update_user", {playerID = hero:GetPlayerID(), playerName = hero.playerName})
 
@@ -465,6 +468,12 @@ function WormWar:OnWormInGame(hero)
 		--local spikeParticle = ParticleManager:CreateParticle("particles/spikes/nyx_assassin_spiked_carapace.vpcf", PATTACH_ABSORIGIN_FOLLOW, hero)
 		--ParticleManager:SetParticleControlEnt(spikeParticle, 1, hero, 1, "follow_origin", hero:GetAbsOrigin(), true)
 	    InitAbilities(hero)
+	    Timers:CreateTimer(.06, function()
+	    	hero:CastAbilityNoTarget(hero:FindAbilityByName("summon_segment_caster_dummy"), 0)
+	    	Timers:CreateTimer(.03, function()
+	    		AddSegments(hero, 1)
+	    	end)
+	    end)
 		ply.firstTime = true
 	end
 end
@@ -576,34 +585,16 @@ function AddSegments( hero, foodAmount )
 		--models/props_wildlife/wildlife_hercules_beetle001.vmdl
 		-- rememeber: head of the body == hero, is at the end of the hero.body table.
 		local lastSegment = hero.body[1]
-		local pos = lastSegment:GetAbsOrigin() + lastSegment:GetForwardVector()*-160
-		local segment = CreateUnitByName("segment", pos, false, nil, hero, hero:GetTeam())
-		segment.makesWormDie = true
-		segment.isSegment = true
-		segment.hero = hero
-
-		segment.spikeParticle = ParticleManager:CreateParticle("particles/spikes/nyx_assassin_spiked_carapace_b.vpcf", PATTACH_ABSORIGIN_FOLLOW, segment)
-		ParticleManager:SetParticleControlEnt(segment.spikeParticle, 1, segment, 1, "follow_origin", segment:GetAbsOrigin(), true)
-
-		local col = WormWar:ColorForPlayer(hero.plyID)
-		segment:SetRenderColor(col[1], col[2], col[3])
-
-		Physics:Unit(segment)
-		segment:SetBaseMoveSpeed(hero:GetBaseMoveSpeed())
-		table.insert(hero.body, 1, segment)
-
-		local numSegments = #hero.body-1
-		if SEGMENTS_TO_WIN-10 == numSegments then
-			EmitGlobalSound("Warning10SegmentsRemaining01")
-			hero.followParticle = ParticleManager:CreateParticle("particles/infest_icon/life_stealer_infested_unit.vpcf", PATTACH_OVERHEAD_FOLLOW, hero)
-			hero.almostWon = true
-			local pos = hero:GetAbsOrigin()
-			--ShowCenterMsg(hero.playerName .. " needs only 10 segments to win!", 2)
-			Say(nil, hero.colHex .. hero.playerName .. COLOR_NONE .. "needs only " .. COLOR_ORANGE .. "10 segments to win! " ..
-				COLOR_RED .. "SQUISH HIM!!", false)
-
-		end
-
+		local pos = lastSegment:GetAbsOrigin() + lastSegment:GetForwardVector()*-130
+		--local segment = CreateUnitByName("segment", pos, false, nil, hero, hero:GetTeam())
+		--hero.segmentCasterDummy:SetForwardVector(pos-hero.segmentCasterDummy:GetAbsOrigin():Normalized())
+		--hero.segmentCasterDummy:CastAbilityOnPosition(pos, hero.segmentCasterDummy:FindAbilityByName("summon_segment"), 0)
+		if hero.segmentCasterDummy == nil then print("segmentCasterDummy nil.") end
+		ExecuteOrderFromTable({ UnitIndex = hero.segmentCasterDummy:GetEntityIndex(),
+			OrderType = DOTA_UNIT_ORDER_CAST_POSITION,
+			Position = pos,
+			AbilityIndex = hero.segmentCasterDummy:FindAbilityByName("summon_segment"):GetEntityIndex(),
+			Queue = true})
 	end
 	PopupGoldGain(hero, foodAmount)
 end
@@ -645,8 +636,11 @@ function WormWar:OnGameRulesStateChange(keys)
 
 	local newState = GameRules:State_Get()
 	if newState == DOTA_GAMERULES_STATE_WAIT_FOR_PLAYERS_TO_LOAD then
+		-- load the game rules, help, etc
+
 		self.bSeenWaitForPlayers = true
 	elseif newState == DOTA_GAMERULES_STATE_INIT then
+		FireGameEvent("turn_off_waitforplayers", {})
 		Timers:RemoveTimer("alljointimer")
 	elseif newState == DOTA_GAMERULES_STATE_HERO_SELECTION then
 		local et = 1
@@ -844,7 +838,7 @@ function WormWar:OnEntityKilled( keys )
 	end
 
 	if killed.wormWarUnit then
-		if killed:GetUnitName() == "inferno" and RandomInt(1, 100) <= 25 then -- helps maintain inferno count.
+		if killed:GetUnitName() == "inferno" and RandomInt(1, 100) <= 20 then -- helps maintain inferno count.
 			SpawnWormWarUnit(true, "inferno")
 		else
 			SpawnWormWarUnit(true, nil)
@@ -934,6 +928,9 @@ function WormWar:InitWormWar()
 	GameRules:SetPreGameTime( 0)
 	GameRules:SetPostGameTime( 30 )
 	GameRules:SetUseBaseGoldBountyOnHeroes(false)
+	GameRules:SetHeroMinimapIconScale( 1.4 )
+	GameRules:SetCreepMinimapIconScale( 1.7 )
+	--GameRules:SetRuneMinimapIconScale( MINIMAP_RUNE_ICON_SIZE )
 	--GameRules:SetHideKillMessageHeaders(false)
 	--print('[WORMWAR] GameRules set')
 
@@ -1264,7 +1261,7 @@ Creep = {}
 
 function Creep:Init(name, loc)
 	local unit = CreateUnitByName(name, loc, true, nil, nil, DOTA_TEAM_NEUTRALS)
-	unit.rad = unit:GetPaddedCollisionRadius()
+	--unit.rad = unit:GetPaddedCollisionRadius()
 	unit.pos = unit:GetAbsOrigin()
 	unit.nextPos = unit:GetAbsOrigin()
 	unit.wormWarUnit = true
@@ -1304,9 +1301,9 @@ function Creep:Init(name, loc)
 	-- TODO: write thing that just takes into acct ring radius for collision detection.
 	-- use loadkeyvalues and just search for ringradius. makes shit easier.
 	function unit:OnThink(  )
-		if DrawDebug then
+		--[[if DrawDebug then
 			DebugDrawCircle(unit:GetAbsOrigin(), Vector(255,0,0), 60, unit.rad, true, .03)
-		end
+		end]]
 		local unitPos = unit:GetAbsOrigin()
 		-- unit dies if he goes out of bounds.
 		if unitPos.x > Bounds.max or unitPos.x < Bounds.min or unitPos.y > Bounds.max or unitPos.y < Bounds.min then
@@ -1329,9 +1326,9 @@ function Creep:Init(name, loc)
 
 		if unit.isInferno then
 			-- if inferno collides with a segment he dies.
-			for i2,ent in ipairs(Entities:FindAllInSphere(unit:GetAbsOrigin(), 300)) do
+			for i2,ent in ipairs(Entities:FindAllInSphere(unit:GetAbsOrigin(), 200)) do
 				if IsValidEntity(ent) then
-					if ent.isSegment and ent:IsAlive() then
+					if ent.isSegment and ent:IsAlive() and not ent.isWormHeadDummy then
 						if circle_circle_collision(unit:GetAbsOrigin(), ent:GetAbsOrigin(), 50, ent:GetPaddedCollisionRadius()) then
 							unit:EmitSound("FireSpawnDeath1")
 							unit.isInferno = false
@@ -1506,8 +1503,8 @@ function InitMap(  )
 	local timeOffset = .03
 	-- CREATE vision dummies
 	local offset = 1800 --528
-	for y=Bounds.max, Bounds.min-1000, -1*offset do
-		for x=Bounds.min, Bounds.max+1000, offset do
+	for y=Bounds.max-500, Bounds.min, -1*offset do
+		for x=Bounds.min+500, Bounds.max, offset do
 			Timers:CreateTimer(timeOffset, function()
 				--if GridNav:IsTraversable(Vector(x,y,GlobalDummy.z)) and not GridNav:IsBlocked(Vector(x,y,GlobalDummy.z)) then
 				local goodguy = CreateUnitByName("vision_dummy", Vector(x,y,GlobalDummy.z), false, nil, nil, DOTA_TEAM_GOODGUYS)
