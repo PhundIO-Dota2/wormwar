@@ -47,7 +47,6 @@ ColorHex =
 
 if not Testing then
 	statcollection.addStats({ modID = 'XXXXXXXXXXXXXXXXXXX' })
-	SEGMENTS_TO_WIN = 60
 else
 	SEGMENTS_TO_WIN = 20
 end
@@ -421,7 +420,7 @@ function WormWar:OnWormInGame(hero)
 	local wormHeadDummy = CreateUnitByName("segment", hero:GetAbsOrigin(), false, nil, hero, hero:GetTeam())
 	wormHeadDummy.isWormHeadDummy = true
 	wormHeadDummy.hero = hero
-	print("hero:GetPaddedCollisionRadius(): " .. hero:GetPaddedCollisionRadius())
+	--print("hero:GetPaddedCollisionRadius(): " .. hero:GetPaddedCollisionRadius())
 	wormHeadDummy.rad = hero:GetPaddedCollisionRadius() + 20
 	wormHeadDummy.makesWormDie = true
 	wormHeadDummy.isSegment = true
@@ -445,13 +444,6 @@ function WormWar:OnWormInGame(hero)
 		-- Store this hero handle in this table.
 		table.insert(self.vHeroes, hero)
 		ply.worm = hero
-
-		-- Whitespace for scoreboard alignment.
-		local whitespace = ""
-		for i=1, 24-string.len(hero.playerName) do
-			whitespace = whitespace .. " "
-		end
-		self.whitespace[hero.playerName] = whitespace
 
 		-- set auto camera up
 		--hero:AutoUpdateCamera()
@@ -586,9 +578,6 @@ function AddSegments( hero, foodAmount )
 		-- rememeber: head of the body == hero, is at the end of the hero.body table.
 		local lastSegment = hero.body[1]
 		local pos = lastSegment:GetAbsOrigin() + lastSegment:GetForwardVector()*-130
-		--local segment = CreateUnitByName("segment", pos, false, nil, hero, hero:GetTeam())
-		--hero.segmentCasterDummy:SetForwardVector(pos-hero.segmentCasterDummy:GetAbsOrigin():Normalized())
-		--hero.segmentCasterDummy:CastAbilityOnPosition(pos, hero.segmentCasterDummy:FindAbilityByName("summon_segment"), 0)
 		if hero.segmentCasterDummy == nil then print("segmentCasterDummy nil.") end
 		ExecuteOrderFromTable({ UnitIndex = hero.segmentCasterDummy:GetEntityIndex(),
 			OrderType = DOTA_UNIT_ORDER_CAST_POSITION,
@@ -640,7 +629,6 @@ function WormWar:OnGameRulesStateChange(keys)
 
 		self.bSeenWaitForPlayers = true
 	elseif newState == DOTA_GAMERULES_STATE_INIT then
-		FireGameEvent("turn_off_waitforplayers", {})
 		Timers:RemoveTimer("alljointimer")
 	elseif newState == DOTA_GAMERULES_STATE_HERO_SELECTION then
 		local et = 1
@@ -658,6 +646,8 @@ function WormWar:OnGameRulesStateChange(keys)
 				end
 				return .1 -- Check again later in case more players spawn
 			end})
+	elseif newState == DOTA_GAMERULES_STATE_PRE_GAME then
+		FireGameEvent("turn_off_waitforplayers", {})
 	elseif newState == DOTA_GAMERULES_STATE_GAME_IN_PROGRESS then
 		WormWar:OnGameInProgress()
 	end
@@ -1074,26 +1064,6 @@ function WormWar:InitWormWar()
 	self.m_TeamColors[8] = { 5, 110, 50 } -- 7:109:44
 	self.m_TeamColors[9] = { 130, 80, 5 } -- 124:75:6
 
-	self.whitespace = {}
-
-	self.m_VictoryMessages = {}
-	self.m_VictoryMessages[DOTA_TEAM_GOODGUYS] = "#VictoryMessage_GoodGuys"
-	self.m_VictoryMessages[DOTA_TEAM_BADGUYS] = "#VictoryMessage_BadGuys"
-	self.m_VictoryMessages[DOTA_TEAM_CUSTOM_1] = "#VictoryMessage_Custom1"
-	self.m_VictoryMessages[DOTA_TEAM_CUSTOM_2] = "#VictoryMessage_Custom2"
-	self.m_VictoryMessages[DOTA_TEAM_CUSTOM_3] = "#VictoryMessage_Custom3"
-	self.m_VictoryMessages[DOTA_TEAM_CUSTOM_4] = "#VictoryMessage_Custom4"
-	self.m_VictoryMessages[DOTA_TEAM_CUSTOM_5] = "#VictoryMessage_Custom5"
-	self.m_VictoryMessages[DOTA_TEAM_CUSTOM_6] = "#VictoryMessage_Custom6"
-	self.m_VictoryMessages[DOTA_TEAM_CUSTOM_7] = "#VictoryMessage_Custom7"
-	self.m_VictoryMessages[DOTA_TEAM_CUSTOM_8] = "#VictoryMessage_Custom8"
-
-	self.m_GatheredShuffledTeams = {}
-	self.m_PlayerTeamAssignments = {}
-	self.m_NumAssignedPlayers = 0
-
-	self.TEAM_KILLS_TO_WIN = 15
-
 	self.runeTypes =
 	{
 		[1] = "Goo_Bomb",
@@ -1460,18 +1430,22 @@ function InitMap(  )
 	NumUnits = 30 -- increase by 35 each interval?
 	if PlayerCount <= 3 then
 		Bounds = {max = 2016}
+		SEGMENTS_TO_WIN = 60
 	elseif PlayerCount <= 6 then
 		Bounds = {max = 4032}
 		DarkSeerWallIndex = 2
 		NumUnits = 60
+		SEGMENTS_TO_WIN = 60
 	elseif PlayerCount <= 9 then
 		Bounds = {max = 6048}
 		DarkSeerWallIndex = 3
 		NumUnits = 90
+		SEGMENTS_TO_WIN = 60
 	elseif PlayerCount <= 12 then
 		Bounds = {max = 8064}
 		DarkSeerWallIndex = 4
 		NumUnits = 120
+		SEGMENTS_TO_WIN = 60
 	end
 	Bounds.min = -1*Bounds.max
 	WormWarUnitCount = 0
@@ -1604,10 +1578,13 @@ function PlayCentaurBloodEffect( unit )
 end
 
 function PlayEndingCinematic(  )
+
+
+
 	-- dota_camera_pitch_max default = 50
 	-- dota_camera_yaw default = 90
 	-- CAMERA_DISTANCE_OVERRIDE = 1400
-	local camera_loop = {}
+	--[[local camera_loop = {}
 	camera_loop.pitch_max = 50 --{-100 to 100}, 
 	camera_loop.yaw = 90 --{0 to 360}, 
 	camera_loop.distance = 1400
@@ -1641,7 +1618,7 @@ function PlayEndingCinematic(  )
 				mode:SetCameraDistanceOverride( camera_loop.distance )
 			end)
 		end		
-	end)
+	end)]]
 end
 
 function PerformKillBanner( streak )

@@ -1,22 +1,9 @@
 ﻿package  {
 	import flash.display.MovieClip;
-	import flash.events.MouseEvent;
-	import flash.utils.getDefinitionByName;
-	import scaleform.clik.events.*;
 	
 	//import some stuff from the valve lib
 	import ValveLib.Globals;
 	import ValveLib.ResizeManager;
-
-	import fl.transitions.Tween;
-	import fl.transitions.easing.*;
-	
-	//copied from VotingPanel.as source
-	import flash.display.*;
-    import flash.filters.*;
-    import flash.text.*;
-    import scaleform.clik.events.*;
-    import vcomponents.*;
 	
 	public class WaitForPlayers extends MovieClip {
 		
@@ -32,6 +19,9 @@
 			this.gameAPI = api;
 			this.globals = globals;
 			
+			this.runeHelpText.wordWrap = true;
+			this.runeHelpText.text = Globals.instance.GameInterface.Translate("#RuneHelpText")
+
 			trace("##Called WaitForPlayers Setup!");
 			this.visible = true;
 		}
@@ -45,7 +35,7 @@
 
 			// this is always called at the resolution the player is currently at.
 			this.x = stageW - this.width/2;
-			this.y = this.height/2;
+			this.y = stageH - this.height/2;
 			
 			trace("#Result Resize: ",this.x,this.y,yScale);
 			

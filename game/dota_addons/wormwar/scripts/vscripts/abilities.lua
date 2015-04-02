@@ -38,7 +38,7 @@ function OnSegmentCasterDummySummoned( keys )
 	print("OnSegmentCasterDummySummoned")
 	--DeepPrintTable(keys)
 	if keys.target:GetUnitName() == "segment_caster_dummy" then
-		print("Found segment_caster_dummy")
+		--print("Found segment_caster_dummy")
 		keys.caster.segmentCasterDummy = keys.target
 		keys.caster.segmentCasterDummy.worm = keys.caster
 	end

@@ -5,6 +5,7 @@ BASE_MODULES = {
 	'lib.statcollection',
 	'abilities',
 	'popups',
+	'loadhelper',
 	'wormwar',
 }
 

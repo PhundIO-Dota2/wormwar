@@ -57,7 +57,10 @@
 			//pass the gameAPI on to the modules
 			this.scoreBoard.setup(this.gameAPI, this.globals);
 			this.waitForPlayers.setup(this.gameAPI, this.globals);
-			
+			this.waitForPlayers2.setup(this.gameAPI, this.globals);
+			this.credits.setup(this.gameAPI, this.globals);
+			//this.waitForPlayersBottom.setup(this.gameAPI, this.globals);
+
 			//this is not needed, but it shows you your UI has loaded (needs 'scaleform_spew 1' in console)
 			trace("[CustomUI] OnLoaded finished!");
 		}
@@ -92,6 +95,7 @@
 
 		public function turnOffWaitForPlayers(args:Object) : void {
 			this.waitForPlayers.visible = false
+			this.waitForPlayers2.visible = false
 
 		}
 
@@ -142,6 +146,9 @@
 			//pass the resize event to our module, we pass the width and height of the screen, as well as the INVERSE of the stage scaling ratios.
 			this.scoreBoard.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
 			this.waitForPlayers.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
+			this.waitForPlayers2.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
+			this.credits.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
+			//this.waitForPlayersBottom.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
 		}
 	}
 }

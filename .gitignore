@@ -14,3 +14,6 @@
 *.vagrp_c
 *.vmdl_c
 *.bin
+
+# mylls junk
+*.psd
