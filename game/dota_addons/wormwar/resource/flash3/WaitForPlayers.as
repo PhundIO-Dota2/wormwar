@@ -37,13 +37,9 @@
 			this.x = stageW - this.width/2;
 			this.y = stageH - this.height/2;
 			
-			trace("#Result Resize: ",this.x,this.y,yScale);
-			
 			//Now we just set the scale of this element, because these parameters are already the inverse ratios
 			this.scaleX = xScale;
 			this.scaleY = yScale;
-			
-			trace("#WaitForPlayers Resize");
 		}
 	}	
 }

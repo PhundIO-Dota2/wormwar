@@ -31,7 +31,6 @@
 			trace("[CustomUI] OnLoaded");
 			
 			this.gameAPI.SubscribeToGameEvent("show_main_ability", showMainAbility);
-			this.gameAPI.SubscribeToGameEvent("show_banner", showBanner);
 			this.gameAPI.SubscribeToGameEvent("turn_off_waitforplayers", turnOffWaitForPlayers);
 
 			this.addChild(holder);
@@ -51,37 +50,17 @@
 			globals.Loader_shared_heroselectorandloadout.movieClip.heroDock.repickButton.enabled = false
 			globals.Loader_shared_heroselectorandloadout.movieClip.heroDock.playGameButton.enabled = false
 
-			//overrideKillBanners();
-			//globals.Loader_hud_chat.movieClip.headerRampage0.symbolTextField.headerTextField	
-
 			//pass the gameAPI on to the modules
 			this.scoreBoard.setup(this.gameAPI, this.globals);
 			this.waitForPlayers.setup(this.gameAPI, this.globals);
 			this.waitForPlayers2.setup(this.gameAPI, this.globals);
 			this.credits.setup(this.gameAPI, this.globals);
+			this.feedback.setup(this.gameAPI, this.globals);
+			this.playAgain.setup(this.gameAPI, this.globals);
 			//this.waitForPlayersBottom.setup(this.gameAPI, this.globals);
 
 			//this is not needed, but it shows you your UI has loaded (needs 'scaleform_spew 1' in console)
 			trace("[CustomUI] OnLoaded finished!");
-		}
-		
-		public function showBanner() : void {
-			trace("showBanner start")
-			var obj = globals.Loader_hud_chat.movieClip.headerRampage0
-			Util.PrintTable(obj)
-			obj.symbolTextField.headerTextField.visible = true
-			obj.symbolTextField.symbolTextField.visible = true
-			/*obj.symbolTextField.headerTextField.text = "HELLO%21%21"
-			obj.visible = true;
-			obj.symbolTextField.visible = true;
-			obj.symbolTextField.visible = true;
-			var i:int = 0;
-			for (i = 0; i<obj.numChildren; i++)
-			{
-			    trace(obj.getChildAt(i));
-			    obj.getChildAt(i).visible = true;
-			}*/
-			trace("showBanner end")
 		}
 
 		public function showMainAbility(args:Object) : void {
@@ -96,7 +75,6 @@
 		public function turnOffWaitForPlayers(args:Object) : void {
 			this.waitForPlayers.visible = false
 			this.waitForPlayers2.visible = false
-
 		}
 
 		public function showAbilityButton(): void {
@@ -148,6 +126,8 @@
 			this.waitForPlayers.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
 			this.waitForPlayers2.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
 			this.credits.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
+			this.feedback.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
+			this.playAgain.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
 			//this.waitForPlayersBottom.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
 		}
 	}

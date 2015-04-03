@@ -42,8 +42,8 @@
 		// Movement
 		//----------------------------------------------------------------
 		"MovementCapabilities"		"DOTA_UNIT_CAP_MOVE_GROUND"			// Type of locomotion - ground, air
-		"MovementTurnRate"			"10"		// Turning rate.
-		"MovementSpeed"				"450"			// Speed
+		//"MovementTurnRate"			"100"		// Turning rate.
+		//"MovementSpeed"				"450"			// Speed
 
 		// Status
 		//----------------------------------------------------------------
@@ -67,7 +67,7 @@
 		"SoundSet"					"Creep_Good_Range"
 		"ModelScale"				"1.2"
 		"MinimapIcon"				"minimap_death"
-		"MinimapIconSize"			"320"
+		"MinimapIconSize"			"310"
 		
 		"precache"
 		{
@@ -104,7 +104,7 @@
 		// Movement
 		//----------------------------------------------------------------
 		"MovementCapabilities"		"DOTA_UNIT_CAP_MOVE_GROUND"			// Type of locomotion - ground, air
-		"MovementSpeed"				"330"			// Speed
+		"MovementSpeed"				"310"			// Speed
 
 		// Status
 		//----------------------------------------------------------------

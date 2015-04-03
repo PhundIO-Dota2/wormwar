@@ -44,11 +44,13 @@
         "playerID"      "byte"
         "playerScore"    "long"
     }
-    "show_banner"
-    {
-    }
     "turn_off_waitforplayers"
     {
+    }
+    "game_over_player_data"
+    {
+        "pID"      "byte"
+        "playerName"    "string"
     }
     // Fired to tell clients who is considered the host
     "lh_hostid"

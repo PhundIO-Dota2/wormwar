@@ -620,7 +620,7 @@
 			{
 				"Passive"				"1"
 				"IsHidden"				"1"
-				//"OverrideAnimation" "ACT_DOTA_IDLE"
+				"OverrideAnimation" "ACT_DOTA_IDLE"
 
 				"States"
 				{

@@ -21,9 +21,8 @@
 			
 			this.wormWarHelpText.wordWrap = true;
 			this.wormWarHelpText.text = Globals.instance.GameInterface.Translate("#WormWarHelpText")
-
-			trace("##Called WaitForPlayers2 Setup!");
 			this.visible = true;
+			trace("##Called WaitForPlayers2 Setup!");
 		}
 		
 		//onScreenResize
@@ -40,8 +39,6 @@
 			//Now we just set the scale of this element, because these parameters are already the inverse ratios
 			this.scaleX = xScale;
 			this.scaleY = yScale;
-			
-			//trace("#WaitForPlayers2 Resize");
 		}
 	}	
 }

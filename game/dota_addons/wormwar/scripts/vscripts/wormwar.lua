@@ -16,6 +16,14 @@ UseCursorStream = false
 
 SEGMENTS_TO_WIN = 60
 Bounds = {center = Vector(0,0,0), max = 4000, min = -4000}
+RUNE_REBIRTH_CHANCE = 25 -- if rune dies, this gives it a higher chance to respawn
+INFERNO_REBIRTH_CHANCE = 33 -- if inferno dies, this gives it a higher chance to respawn
+
+if not Testing then
+	statcollection.addStats({ modID = 'XXXXXXXXXXXXXXXXXXX' })
+else
+	SEGMENTS_TO_WIN = 10
+end
 
 ColorStr = 
 {	-- This is plyID+1
@@ -44,12 +52,6 @@ ColorHex =
 	[9] = COLOR_DGREEN,
 	[10] = COLOR_GOLD,
 }
-
-if not Testing then
-	statcollection.addStats({ modID = 'XXXXXXXXXXXXXXXXXXX' })
-else
-	SEGMENTS_TO_WIN = 20
-end
 
 -- Generated from template
 if WormWar == nil then
@@ -99,7 +101,7 @@ function WormWar:OnWormInGame(hero)
 
 		-- update score
 		hero.score = #hero.body-1
-		if hero.score >= SEGMENTS_TO_WIN and not self.gameOver and not Testing then
+		if hero.score >= SEGMENTS_TO_WIN and not self.gameOver then
 			ShowCenterMsg(hero.playerName .. " WINS!", 3)
 			local lines = 
 			{
@@ -112,7 +114,7 @@ function WormWar:OnWormInGame(hero)
 
 			self.gameOver = true
 			Winner = hero
-			PlayEndingCinematic()
+			WormWar:OnGameOver()
 			return
 		end
 		if SEGMENTS_TO_WIN-hero.score > 10 and hero.followParticle then
@@ -247,7 +249,7 @@ function WormWar:OnWormInGame(hero)
 						hero:EmitSound("Bottle.Cork")
 						--EmitSoundOnClient("Bottle.Cork", hero.player)
 						ent.isRune = false;
-						if RandomInt(1, 100) <= 20 then
+						if RandomInt(1, 100) <= RUNE_REBIRTH_CHANCE then
 							SpawnWormWarUnit(true, "rune") -- helps maintain rune count.
 						else
 							SpawnWormWarUnit(true, nil)
@@ -421,7 +423,7 @@ function WormWar:OnWormInGame(hero)
 	wormHeadDummy.isWormHeadDummy = true
 	wormHeadDummy.hero = hero
 	--print("hero:GetPaddedCollisionRadius(): " .. hero:GetPaddedCollisionRadius())
-	wormHeadDummy.rad = hero:GetPaddedCollisionRadius() + 20
+	wormHeadDummy.rad = hero:GetPaddedCollisionRadius() + 5
 	wormHeadDummy.makesWormDie = true
 	wormHeadDummy.isSegment = true
 	wormHeadDummy:SetOriginalModel("models/development/invisiblebox.vmdl")
@@ -602,8 +604,8 @@ function WormWar:PlayerSay( keys )
 	end
 	--print("txt: " .. txt)
   	-- At this point we have valid text from a player.
-	if txt == "-showbanner" then
-		FireGameEvent("show_banner", {})
+	if txt == "-somecommand" then
+
 	end
 end
 
@@ -611,11 +613,14 @@ end
 function WormWar:OnDisconnect(keys)
 	--print('[WORMWAR] Player Disconnected ' .. tostring(keys.userid))
 	--PrintTable(keys)
-
 	local name = keys.name
 	local networkid = keys.networkid
 	local reason = keys.reason
 	local userid = keys.userid
+	local ply = self.vUserIds[userid]
+	local hero = ply:GetAssignedHero()
+	hero.disconnected = true
+
 end
 
 -- The overall game state has changed
@@ -689,7 +694,10 @@ end
 -- A player has reconnected to the game.  This function can be used to repaint Player-based particles or change
 -- state as necessary
 function WormWar:OnPlayerReconnect(keys)
-	--print ( '[WORMWAR] OnPlayerReconnect' )
+	local plyID = keys.PlayerID
+	print("P" .. plyID .. " reconnected.")
+	local hero = PlayerResource:GetPlayer(plyID):GetAssignedHero()
+	hero.disconnected = false
 	--PrintTable(keys)
 end
 
@@ -820,6 +828,8 @@ function WormWar:OnEntityKilled( keys )
 	--print( '[WORMWAR] OnEntityKilled Called' )
 	--PrintTable( keys )
 
+	if self.gameOver then return end
+
 	local killed = EntIndexToHScript( keys.entindex_killed )
 	
 	local killer = nil
@@ -828,7 +838,7 @@ function WormWar:OnEntityKilled( keys )
 	end
 
 	if killed.wormWarUnit then
-		if killed:GetUnitName() == "inferno" and RandomInt(1, 100) <= 20 then -- helps maintain inferno count.
+		if killed:GetUnitName() == "inferno" and RandomInt(1, 100) <= INFERNO_REBIRTH_CHANCE then -- helps maintain inferno count.
 			SpawnWormWarUnit(true, "inferno")
 		else
 			SpawnWormWarUnit(true, nil)
@@ -960,13 +970,6 @@ function WormWar:InitWormWar()
 		print("ForceNextRune: " .. ForceNextRune)
 	end, 'Goo_Bomb,Fiery_Jaw,Segment_Bomb,Crypt_Craving,Reverse', 0)
 
-	Convars:RegisterCommand('show_banner', function(...)
-		local args = {...}
-		table.remove(args,1)
-		local cmdPlayer = Convars:GetCommandClient()
-		FireGameEvent("show_banner", {})
-	end, '', 0)
-
 	Convars:RegisterCommand('test_worm_spawns', function(...)
 		local args = {...}
 		table.remove(args,1)
@@ -977,6 +980,32 @@ function WormWar:InitWormWar()
 		end
 
 	end, 'Goo_Bomb,Fiery_Jaw,Segment_Bomb,Crypt_Craving,Reverse', 0)
+
+	Convars:RegisterCommand('player_wants_to_leave', function(...)
+		local args = {...}
+		table.remove(args,1)
+		local cmdPlayer = Convars:GetCommandClient()
+		cmdPlayer.validPlayer = false
+		local hero = cmdPlayer:GetAssignedHero()
+		hero.validPlayer = false
+		print("player_wants_to_leave called for P" .. hero:GetPlayerID())
+		--PrintTable(cmdPlayer)
+		--SendToServerConsole("")
+
+	end, '', 0)
+
+	Convars:RegisterCommand('start_a_new_game', function(...)
+		local args = {...}
+		table.remove(args,1)
+		local cmdPlayer = Convars:GetCommandClient()
+		cmdPlayer.validPlayer = false
+		local hero = cmdPlayer:GetAssignedHero()
+		hero.validPlayer = false
+		print("start_a_new_game")
+		--PrintTable(cmdPlayer)
+		--SendToServerConsole("")
+
+	end, '', 0)
 
 	Convars:RegisterCommand('unload_and_restart', function(...)
 		SendToServerConsole("restart")
@@ -1123,7 +1152,7 @@ function WormWar:CaptureWormWar()
 		--mode:SetCameraDistanceOverride( 1134 )
 		mode:SetBuybackEnabled( false )
 		mode:SetTopBarTeamValuesOverride ( true )
-		mode:SetTopBarTeamValuesVisible( true ) -- this needed for kill banners?
+		mode:SetTopBarTeamValuesVisible( false ) -- this needed for kill banners?
 		--mode:SetFogOfWarDisabled(true)
 		mode:SetGoldSoundDisabled( true )
 		--mode:SetRemoveIllusionsOnDeath( true )
@@ -1354,9 +1383,9 @@ end
 function spawn_rune( point )
 
 	local rune = CreateUnitByName("rune", point, true, nil, nil, DOTA_TEAM_NEUTRALS)
-	local runeParticle = ParticleManager:CreateParticle("particles/generic_gameplay/rune_illusion.vpcf", PATTACH_CUSTOMORIGIN, rune)
+	local runeParticle = ParticleManager:CreateParticle("particles/generic_gameplay/rune_illusion.vpcf", PATTACH_ABSORIGIN_FOLLOW, rune)
 	local runePos = rune:GetAbsOrigin()
-	ParticleManager:SetParticleControl(runeParticle, 0, Vector(runePos.x, runePos.y, runePos.z+20))
+	--ParticleManager:SetParticleControl(runeParticle, 0, Vector(runePos.x, runePos.y, runePos.z+10))
 	rune.isRune = true
 	rune.wormWarUnit = true
 	rune.runeType = WormWar.runeTypes[RandomInt(1,#WormWar.runeTypes)]
@@ -1430,22 +1459,22 @@ function InitMap(  )
 	NumUnits = 30 -- increase by 35 each interval?
 	if PlayerCount <= 3 then
 		Bounds = {max = 2016}
-		SEGMENTS_TO_WIN = 60
+		--SEGMENTS_TO_WIN = 60
 	elseif PlayerCount <= 6 then
 		Bounds = {max = 4032}
 		DarkSeerWallIndex = 2
 		NumUnits = 60
-		SEGMENTS_TO_WIN = 60
+		--SEGMENTS_TO_WIN = 60
 	elseif PlayerCount <= 9 then
 		Bounds = {max = 6048}
 		DarkSeerWallIndex = 3
 		NumUnits = 90
-		SEGMENTS_TO_WIN = 60
+		--SEGMENTS_TO_WIN = 60
 	elseif PlayerCount <= 12 then
 		Bounds = {max = 8064}
 		DarkSeerWallIndex = 4
 		NumUnits = 120
-		SEGMENTS_TO_WIN = 60
+		--SEGMENTS_TO_WIN = 60
 	end
 	Bounds.min = -1*Bounds.max
 	WormWarUnitCount = 0
@@ -1624,4 +1653,14 @@ end
 function PerformKillBanner( streak )
 	
 
+end
+
+function WormWar:OnGameOver(  )
+	PlayEndingCinematic()
+
+	for _,hero in pairs(self.vHeroes) do
+		--if not hero.disconnected then
+		FireGameEvent("game_over_player_data", {pID = hero:GetPlayerID(), playerName = hero.playerName})
+		--end
+	end
 end
