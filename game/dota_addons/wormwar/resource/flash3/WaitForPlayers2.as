@@ -16,6 +16,7 @@
 		
 		//set initialise this instance's gameAPI
 		public function setup(api:Object, globals:Object) {
+			trace("##WaitForPlayers2 start");
 			this.gameAPI = api;
 			this.globals = globals;
 			

@@ -57,4 +57,11 @@
     {
         "hostID"       "byte"  // The ID of the player who is the host
     }
+    "start_ending_cinematic"
+    {
+    }
+    "change_segments_to_win"
+    {
+        "amount"    "short"
+    }
 }

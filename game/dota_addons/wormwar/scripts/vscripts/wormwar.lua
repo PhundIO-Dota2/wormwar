@@ -1,28 +1,23 @@
--- Dota 2 Worm War
--- Developer: Myll
--- Credits to: BMD (Timers/Physics/Barebones), Blizzard Entertainment (Various Assets, WC3 Worm War)
--- ... Noya (code snippets taken from Courier Madness), a_dizzle (Flash Scoreboard), zedor (Flash stuff)
--- If you feel like you should be in the credits let me know.
--- Thanks to everybody who helps spread modding information through moddota.com, Github, IRC, etc.
-
 print ('[WORMWAR] wormwar.lua' )
 
 NEXT_FRAME = .01
 Testing = true
+
 TestMoreAbilities = false
 OutOfWorldVector = Vector(5000, 5000, -200)
 DrawDebug = false
 UseCursorStream = false
 
-SEGMENTS_TO_WIN = 60
+SEGMENTS_TO_WIN = 20
 Bounds = {center = Vector(0,0,0), max = 4000, min = -4000}
-RUNE_REBIRTH_CHANCE = 25 -- if rune dies, this gives it a higher chance to respawn
-INFERNO_REBIRTH_CHANCE = 33 -- if inferno dies, this gives it a higher chance to respawn
+RUNE_REBIRTH_CHANCE = 33 -- if rune dies, this gives it a higher chance to respawn
+INFERNO_REBIRTH_CHANCE = 20 -- if inferno dies, this gives it a higher chance to respawn
+-- TODO: HAVE MAX # OF RUNES ON MAP??
 
 if not Testing then
 	statcollection.addStats({ modID = 'XXXXXXXXXXXXXXXXXXX' })
 else
-	SEGMENTS_TO_WIN = 10
+	SEGMENTS_TO_WIN = 20
 end
 
 ColorStr = 
@@ -42,7 +37,7 @@ ColorStr =
 ColorHex = 
 {	-- This is plyID+1
 	[1] = COLOR_BLUE,
-	[2] = COLOR_RED,
+	[2] = COLOR_LRED, -- there is no cyan
 	[3] = COLOR_PURPLE,
 	[4] = COLOR_DYELLOW,
 	[5] = COLOR_ORANGE,
@@ -51,6 +46,20 @@ ColorHex =
 	[8] = COLOR_SBLUE,
 	[9] = COLOR_DGREEN,
 	[10] = COLOR_GOLD,
+}
+
+DummyNames =
+{
+	[1] = "Bob",
+	[2] = "Steve",
+	[3] = "Nathan",
+	[4] = "Alex",
+	[5] = "Joan",
+	[6] = "Christian",
+	[7] = "Amy",
+	[8] = "Chris",
+	[9] = "Jim",
+	[10] = "Dan",
 }
 
 -- Generated from template
@@ -90,7 +99,7 @@ function WormWar:OnAllPlayersLoaded()
 		end
 	end
 
-	InitMap()
+	self:InitMap()
 end
 
 function WormWar:OnWormInGame(hero)
@@ -102,13 +111,6 @@ function WormWar:OnWormInGame(hero)
 		-- update score
 		hero.score = #hero.body-1
 		if hero.score >= SEGMENTS_TO_WIN and not self.gameOver then
-			ShowCenterMsg(hero.playerName .. " WINS!", 3)
-			local lines = 
-			{
-				[1] = ColorIt("Thank you for playing ", "green") .. ColorIt("Worm War", "orange") .. "!",
-				[2] = "Please submit bugs and feedback on the " .. ColorIt("Workshop Forums at www.goo.gl/", "green"),
-				[3] =  ColorIt(" ", "green")
-			}
 			EmitGlobalSound("Wormtastic01")
 			local winnerParticle = ParticleManager:CreateParticle("particles/units/heroes/hero_legion_commander/legion_commander_duel_victory.vpcf", PATTACH_OVERHEAD_FOLLOW, hero)
 
@@ -180,7 +182,6 @@ function WormWar:OnWormInGame(hero)
 									local squishParticle = ParticleManager:CreateParticle("particles/squish_text/tusk_walruspunch_txt_ult.vpcf", PATTACH_ABSORIGIN, hero)
 									ParticleManager:SetParticleControl( squishParticle, 2, hero:GetAbsOrigin() )
 									--tusk_walruspunch_txt_ult.vpcf
-									--PerformKillBanner(hero2.killStreak)
 
 									hero2.lastSquishTime = currTime
 									-- get % of segments
@@ -255,10 +256,6 @@ function WormWar:OnWormInGame(hero)
 							SpawnWormWarUnit(true, nil)
 						end
 						ent:RemoveSelf()
-						-- set it underground
-						--[[local p = ent:GetAbsOrigin()
-						ent:SetAbsOrigin(Vector(p.x,p.y,p.z-300))
-						ent:ForceKill(true)]]
 					end
 				end
 			end -- endfor
@@ -372,9 +369,12 @@ function WormWar:OnWormInGame(hero)
 	end
 
 	local lines = {
-		ColorIt("Welcome to ", "green") .. ColorIt("Worm War! ", "magenta") .. ColorIt("v0.1", "blue"),
-		ColorIt("Developer: ", "green") .. ColorIt("Myll", "orange"),
-
+		ColorIt("Welcome to ", "cyan") .. ColorIt("WORM WAR! ", "green") .. ColorIt("v0.1", "orange"),
+		ColorIt("Run into sheep and pigs to increase your segment count! ", "blue") .. ColorIt("Careful, don't run into Infernos.", "red"),
+		ColorIt("Collect runes to obtain abilities! ", "magenta"),
+		ColorIt("SQUISH your opponents ", "red") .. ColorIt("whenever you can!", "blue"),
+		ColorIt("FIRST TO ", "green") .. ColorIt(SEGMENTS_TO_WIN, "magenta") .. ColorIt(" WINS!! ", "green") .. ColorIt("GL & HF!", "cyan"),
+		--ColorIt("GOOD LUCK!! ", "green") .. ColorIt("HAVE FUN!!", "light_green"),
 	}
 
 	if not self.greetPlayers then
@@ -383,9 +383,7 @@ function WormWar:OnWormInGame(hero)
 		Timers:CreateTimer(1.2, function()
 			EmitGlobalSound("WelcometoWormWar01")
 			ShowCenterMsg("WORM WAR", 3)
-		end)
 
-		Timers:CreateTimer(4, function()
 			for i,line in ipairs(lines) do
 				GameRules:SendCustomMessage(line, 0, 0)
 			end
@@ -440,7 +438,7 @@ function WormWar:OnWormInGame(hero)
 		-- Store the player's name inside this hero handle.
 		hero.playerName = PlayerResource:GetPlayerName(hero.plyID)
 		if hero.playerName == nil or hero.playerName == "" then
-			hero.playerName = "Bob"
+			hero.playerName = DummyNames[hero.plyID+1]
 		end
 		self:MakeLabelForPlayer(hero)
 		-- Store this hero handle in this table.
@@ -459,12 +457,14 @@ function WormWar:OnWormInGame(hero)
 		if not TestMoreAbilities then
 			FireGameEvent("show_main_ability", {pID = hero:GetPlayerID()})
 		end
+
 		--local spikeParticle = ParticleManager:CreateParticle("particles/spikes/nyx_assassin_spiked_carapace.vpcf", PATTACH_ABSORIGIN_FOLLOW, hero)
 		--ParticleManager:SetParticleControlEnt(spikeParticle, 1, hero, 1, "follow_origin", hero:GetAbsOrigin(), true)
+
 	    InitAbilities(hero)
 	    Timers:CreateTimer(.06, function()
 	    	hero:CastAbilityNoTarget(hero:FindAbilityByName("summon_segment_caster_dummy"), 0)
-	    	Timers:CreateTimer(.03, function()
+	    	Timers:CreateTimer(.06, function()
 	    		AddSegments(hero, 1)
 	    	end)
 	    end)
@@ -619,8 +619,7 @@ function WormWar:OnDisconnect(keys)
 	local userid = keys.userid
 	local ply = self.vUserIds[userid]
 	local hero = ply:GetAssignedHero()
-	hero.disconnected = true
-
+	ply.disconnected = true
 end
 
 -- The overall game state has changed
@@ -697,8 +696,7 @@ function WormWar:OnPlayerReconnect(keys)
 	local plyID = keys.PlayerID
 	print("P" .. plyID .. " reconnected.")
 	local hero = PlayerResource:GetPlayer(plyID):GetAssignedHero()
-	hero.disconnected = false
-	--PrintTable(keys)
+	ply.disconnected = false
 end
 
 -- An item was purchased by a player
@@ -825,9 +823,6 @@ end
 
 -- An entity died
 function WormWar:OnEntityKilled( keys )
-	--print( '[WORMWAR] OnEntityKilled Called' )
-	--PrintTable( keys )
-
 	if self.gameOver then return end
 
 	local killed = EntIndexToHScript( keys.entindex_killed )
@@ -838,6 +833,7 @@ function WormWar:OnEntityKilled( keys )
 	end
 
 	if killed.wormWarUnit then
+		--print("spawning a new unit.")
 		if killed:GetUnitName() == "inferno" and RandomInt(1, 100) <= INFERNO_REBIRTH_CHANCE then -- helps maintain inferno count.
 			SpawnWormWarUnit(true, "inferno")
 		else
@@ -886,7 +882,7 @@ function FindGoodPosition(unitName)
 	while pointNotGood do
 		--print("pos: " .. VectorString(pos))
 		pointNotGood = false
-		for i,ent in ipairs(Entities:FindAllInSphere(pos, 160)) do
+		for i,ent in ipairs(Entities:FindAllInSphere(pos, 300)) do
 			if unitName == "worm" then
 				-- dont spawn the worm on any other units
 				if ent.wormWarUnit or ent.isWorm then
@@ -984,26 +980,43 @@ function WormWar:InitWormWar()
 	Convars:RegisterCommand('player_wants_to_leave', function(...)
 		local args = {...}
 		table.remove(args,1)
-		local cmdPlayer = Convars:GetCommandClient()
-		cmdPlayer.validPlayer = false
-		local hero = cmdPlayer:GetAssignedHero()
-		hero.validPlayer = false
+		local ply = Convars:GetCommandClient()
+		local hero = ply:GetAssignedHero()
 		print("player_wants_to_leave called for P" .. hero:GetPlayerID())
-		--PrintTable(cmdPlayer)
-		--SendToServerConsole("")
+		ply.disconnected = true
+		ply.wontBeComingBack = true
+		SendToServerConsole("kickid " .. ply.userID)
 
 	end, '', 0)
 
 	Convars:RegisterCommand('start_a_new_game', function(...)
+		if GameStarted then return end
+		GameStarted = true
 		local args = {...}
 		table.remove(args,1)
-		local cmdPlayer = Convars:GetCommandClient()
-		cmdPlayer.validPlayer = false
-		local hero = cmdPlayer:GetAssignedHero()
-		hero.validPlayer = false
+		--local cmdPlayer = Convars:GetCommandClient()
 		print("start_a_new_game")
-		--PrintTable(cmdPlayer)
-		--SendToServerConsole("")
+
+		local newHeroesTable = {}
+		for _,hero in ipairs(WormWar.vHeroes) do
+			local ply = hero:GetPlayerOwner()
+			if ply and ply.wontBeComingBack then
+				hero:SetAbsOrigin(9000,9000,-600)
+				hero:AddNewModifier(hero, nil, "modifier_stunned", {})
+				hero.isWorm = false
+			else
+				table.insert(newHeroesTable, hero)
+				if hero:HasModifier("modifier_stunned") then
+					hero:RemoveModifierByName("modifier_stunned")
+				end
+				ply.firstTime = false
+				WormWar:OnWormInGame(hero)
+			end
+		end
+		WormWar.vHeroes = newHeroesTable
+		PlayerCount = #WormWar.vHeroes
+		WormWar:InitMap()
+		WormWar.gameOver = false
 
 	end, '', 0)
 
@@ -1038,41 +1051,6 @@ function WormWar:InitWormWar()
 			self:PlayerSay(keys)
 		end
 	end, 'player say', 0)
-
-	-- Fill server with fake clients
-	-- Fake clients don't use the default bot AI for buying items or moving down lanes and are sometimes necessary for debugging
-	Convars:RegisterCommand('fake', function()
-		-- Check if the server ran it
-		if not Convars:GetCommandClient() then
-			-- Create fake Players
-			SendToServerConsole('dota_create_fake_clients')
-
-			Timers:CreateTimer('assign_fakes', {
-				useGameTime = false,
-				endTime = Time(),
-				callback = function(wormwar, args)
-					local userID = 20
-					for i=0, 9 do
-						userID = userID + 1
-						-- Check if this player is a fake one
-						if PlayerResource:IsFakeClient(i) then
-							-- Grab player instance
-							local ply = PlayerResource:GetPlayer(i)
-							-- Make sure we actually found a player instance
-							if ply then
-								CreateHeroForPlayer('npc_dota_hero_axe', ply)
-								self:OnConnectFull({
-									userid = userID,
-									index = ply:entindex()-1
-								})
-
-								ply:GetAssignedHero():SetControllableByPlayer(0, true)
-							end
-						end
-					end
-				end})
-		end
-	end, 'Connects and assigns fake Players.', 0)
 
 	-- Change random seed
 	local timeTxt = string.gsub(string.gsub(GetSystemTime(), ':', ''), '0','')
@@ -1137,8 +1115,6 @@ function WormWar:InitWormWar()
 	self.nDireKills = 0
 
 	self.bSeenWaitForPlayers = false
-
-	--print('[WORMWAR] Done loading WormWar gamemode!\n\n')
 end
 
 mode = nil
@@ -1204,8 +1180,9 @@ function WormWar:OnConnectFull(keys)
 	-- The Player ID of the joining player
 	local playerID = ply:GetPlayerID()
 
-	-- Update the user ID table with this user
+	ply.userID = keys.userid
 	self.vUserIds[keys.userid] = ply
+	print("ply.userid: " .. ply.userID)
 
 	-- Update the Steam ID table
 	self.vSteamIds[PlayerResource:GetSteamAccountID(playerID)] = ply
@@ -1417,7 +1394,7 @@ function GetRandomUnit(  )
 	-- 20% chance to spawn pig
 	elseif roll <= 30 then
 		unit = "pig"
-	elseif roll <= 36 then
+	elseif roll <= 37 then
 		unit = "rune"
 	else
 		unit = "sheep"
@@ -1449,12 +1426,11 @@ function OnHeroOutOfBounds( hero )
 	GameRules:SendCustomMessage(ColorIt(hero.playerName, hero.colStr) .. " just ran into a wall!", 0, 0)
 end
 
-function InitMap(  )
+function WormWar:InitMap(  )
 	--total map is 8064 (reserve a 64 tile for whatever)
 	-- 4 intervals spaced out 2016 units apart.
 
 	-- determine the bounds for the map
-	DarkSeerWallIndex = 1
 	if Testing then PlayerCount = 6 end
 	NumUnits = 30 -- increase by 35 each interval?
 	if PlayerCount <= 3 then
@@ -1462,20 +1438,19 @@ function InitMap(  )
 		--SEGMENTS_TO_WIN = 60
 	elseif PlayerCount <= 6 then
 		Bounds = {max = 4032}
-		DarkSeerWallIndex = 2
 		NumUnits = 60
 		--SEGMENTS_TO_WIN = 60
 	elseif PlayerCount <= 9 then
 		Bounds = {max = 6048}
-		DarkSeerWallIndex = 3
 		NumUnits = 90
 		--SEGMENTS_TO_WIN = 60
 	elseif PlayerCount <= 12 then
 		Bounds = {max = 8064}
-		DarkSeerWallIndex = 4
 		NumUnits = 120
 		--SEGMENTS_TO_WIN = 60
 	end
+	FireGameEvent("change_segments_to_win", {amount=SEGMENTS_TO_WIN})
+
 	Bounds.min = -1*Bounds.max
 	WormWarUnitCount = 0
 
@@ -1516,6 +1491,7 @@ function InitMap(  )
 				badguy.isVisionDummy = true
 				table.insert(VisionDummies.GoodGuys, goodguy)
 				table.insert(VisionDummies.BadGuys, badguy)
+				print("vision_dummy")
 				--DebugDrawCircle(Vector(x,y,GlobalDummy.z), Vector(0,0,255), 10, 1800, true, 4000)
 				--end
 			end)
@@ -1529,42 +1505,33 @@ function InitMap(  )
 		DebugDrawBox(center, Vector(Bounds.min,Bounds.min,0), Vector(Bounds.max,Bounds.max,30), 255, 0, 0, 0, 4000)
 	end
 
-	-- DARK SEER WALL SPAWNS
-	BasicForwardVects = 
+	if self.WallParticles then
+		for i=1,4 do
+			local wallParticle = self.WallParticles[i]
+			ParticleManager:DestroyParticle(wallParticle, true)
+		end
+	else
+		self.WallParticles = {}
+	end
+
+	Corners = 
 	{
-		[1] = Vector(0,1,0), --up
-		[2] = Vector(1,0,0), --right
-		[3] = Vector(-1,0,0), -- left
-		[4] = Vector(0,-1,0) --down
+		[1] = Vector(Bounds.max, Bounds.max, GlobalDummy.z),
+		[2] = Vector(Bounds.min, Bounds.max, GlobalDummy.z),
+		[3] = Vector(Bounds.min, Bounds.min, GlobalDummy.z),
+		[4] = Vector(Bounds.max, Bounds.min, GlobalDummy.z),
 	}
 
-	GlobalDummy:AddAbility("dark_seer_wall_of_discord_" .. DarkSeerWallIndex)
-	local abil = GlobalDummy:FindAbilityByName("dark_seer_wall_of_discord_" .. DarkSeerWallIndex)
-	abil:SetLevel(1)
+	for i=1,4 do
+		local corner = Corners[i]
+		local nextCorner = Corners[i+1]
+		if nextCorner == nil then nextCorner = Corners[1] end
 
-	local ptr = 1
-	Timers:CreateTimer(.3, function()
-		if ptr > #BasicForwardVects then return end
-		GlobalDummy:SetAbsOrigin(Vector(0,0,GlobalDummy.z))
-		GlobalDummy:SetForwardVector(BasicForwardVects[ptr])
-		if ptr == 1 then
-			GlobalDummy:CastAbilityOnPosition(Vector(0,Bounds.max,GlobalDummy.z), abil, 0)
-			--DebugDrawBox(Vector(0,Bounds.max,GlobalDummy.z), Vector(-64,-64,0), Vector(64,64,30), 0, 255, 0, 100, 4000)
-		elseif ptr == 2 then
-			GlobalDummy:CastAbilityOnPosition(Vector(Bounds.max,0,GlobalDummy.z), abil, 0)
-			--DebugDrawBox(Vector(0,-1*Bounds.max,GlobalDummy.z), Vector(-64,-64,0), Vector(64,64,30), 0, 0, 255, 100, 4000)
-		elseif ptr == 3 then
-			--GlobalDummy:CastAbilityOnPosition(Vector(0,-1*Bounds.max,GlobalDummy.z), abil, 0)
-			GlobalDummy:CastAbilityOnPosition(Vector(Bounds.min,0,GlobalDummy.z), abil, 0)
-		elseif ptr == 4 then
-			GlobalDummy:SetForwardVector(BasicForwardVects[4])
-			GlobalDummy:SetAbsOrigin(GlobalDummy:GetAbsOrigin() + GlobalDummy:GetForwardVector()*2000)
-			--DebugDrawBox(Vector(Bounds.max,0,GlobalDummy.z), Vector(-64,-64,0), Vector(64,64,30), 255, 0, 0, 100, 4000)
-			GlobalDummy:CastAbilityOnPosition(Vector(0,Bounds.min,GlobalDummy.z), abil, 0)
-		end
-		ptr = ptr + 1
-		return .3
-	end)
+		local wallParticle = ParticleManager:CreateParticle("particles/units/heroes/hero_dark_seer/dark_seer_wall_of_replica.vpcf", PATTACH_CUSTOMORIGIN, GlobalDummy)
+		ParticleManager:SetParticleControl(wallParticle, 0, corner)
+		ParticleManager:SetParticleControl(wallParticle, 1, nextCorner)
+		self.WallParticles[i] = wallParticle
+	end
 
 	-- spawn the units
 	for i=1,NumUnits do
@@ -1577,20 +1544,29 @@ function InitMap(  )
 		end
 	end
 
+	if not InitialHeroSpawn then
+		Timers:CreateTimer(.5, function()
+			for i,ent in ipairs(Entities:FindAllByClassname("info_player_start_*")) do
+				local pos = FindGoodPosition("info_player_start")
+				ent:SetAbsOrigin(pos)
+			end
 
-	for i,ent in ipairs(Entities:FindAllByClassname("info_player_start_*")) do
-		local pos = FindGoodPosition("info_player_start")
-		ent:SetAbsOrigin(pos)
-	end
-
-	--Timers:CreateTimer(1, function()
-		for k,ply in pairs(WormWar.vPlayers) do
-			if ply ~= nil then
-				local hero = CreateHeroForPlayer("npc_dota_hero_nyx_assassin", ply)
+			for k,ply in pairs(WormWar.vPlayers) do
+				if ply ~= nil then
+					local hero = CreateHeroForPlayer("npc_dota_hero_nyx_assassin", ply)
+				end
+			end
+			print("initMap complete.")
+		end)
+		InitialHeroSpawn = true
+	else
+		for i,_hero in ipairs(WormWar.vHeroes) do
+			_hero:SetAbsOrigin(FindGoodPosition("worm"))
+			if _hero:HasModifier("modifier_stunned") then
+				_hero:RemoveModifierByName("modifier_stunned")
 			end
 		end
-		print("initMap complete.")
-	--end)
+	end
 
 	WormWar.initMap = true
 end
@@ -1606,61 +1582,46 @@ function PlayCentaurBloodEffect( unit )
 	ParticleManager:SetParticleControl(blood, 5, targetLoc+RandomVector(RandomInt(20,100)))
 end
 
-function PlayEndingCinematic(  )
-
-
-
-	-- dota_camera_pitch_max default = 50
-	-- dota_camera_yaw default = 90
-	-- CAMERA_DISTANCE_OVERRIDE = 1400
-	--[[local camera_loop = {}
-	camera_loop.pitch_max = 50 --{-100 to 100}, 
-	camera_loop.yaw = 90 --{0 to 360}, 
-	camera_loop.distance = 1400
-	SendToConsole("r_farz 5000")
-
-	for i=1,100 do
-
-		Timers:CreateTimer(i*0.03, function()
-
-			camera_loop.pitch_max = camera_loop.pitch_max - 0.2 --up to 10
-			camera_loop.yaw = camera_loop.yaw + 1.8 --up to 270
-			camera_loop.distance = camera_loop.distance - 6 --1400 to 800
-
-			SendToConsole("dota_camera_pitch_max "..camera_loop.pitch_max)
-			SendToConsole("dota_camera_yaw "..camera_loop.yaw)
-			mode:SetCameraDistanceOverride( camera_loop.distance )
-
-		end)
-	end
-
-	-- 10 sec later, rotate another 180, from 270 to 450
-	Timers:CreateTimer(10.0, function() 
-		for i=1,100 do
-			Timers:CreateTimer(i*0.03, function()
-
-				camera_loop.yaw = camera_loop.yaw + 1.8
-				camera_loop.distance = camera_loop.distance + 6 --1400 to 800
-
-				--SendToConsole("dota_camera_pitch_max "..camera_loop.pitch_max)
-				SendToConsole("dota_camera_yaw "..camera_loop.yaw)
-				mode:SetCameraDistanceOverride( camera_loop.distance )
-			end)
-		end		
-	end)]]
-end
-
-function PerformKillBanner( streak )
-	
-
-end
-
 function WormWar:OnGameOver(  )
-	PlayEndingCinematic()
-
-	for _,hero in pairs(self.vHeroes) do
-		--if not hero.disconnected then
-		FireGameEvent("game_over_player_data", {pID = hero:GetPlayerID(), playerName = hero.playerName})
-		--end
+	--PlayEndingCinematic()
+	for _,hero in ipairs(self.vHeroes) do
+		PlayerResource:SetCameraTarget(hero:GetPlayerID(), Winner)
 	end
+	FireGameEvent("start_ending_cinematic", {})
+
+	for _,hero in ipairs(self.vHeroes) do
+		hero:AddNewModifier(hero, nil, "modifier_rooted", nil)
+	end
+
+	ShowCenterMsg(Winner.playerName .. " WINS!", 4)
+	local lines = 
+	{
+		[1] = ColorIt(Winner.playerName, Winner.colStr) .. ColorIt(" has won the game!", "blue"),
+		[2] = ColorIt("Thank you for playing ", "green") .. ColorIt("Worm War", "red") .. "!",
+		[3] = ColorIt("Please submit bugs and feedback on Worm War's Workshop Page at ", "blue") .. ColorIt("www.goo.gl/", "green"),
+		--[4] = " "
+	}
+
+	for i,line in ipairs(lines) do
+		GameRules:SendCustomMessage(line, 0, 0)
+	end
+
+	GameStarted = false
+
+	-- allot time for the ending cinematic.
+	Timers:CreateTimer(7, function()
+		--[[for _,hero in pairs(self.vHeroes) do
+			FireGameEvent("game_over_player_data", {pID = hero:GetPlayerID(), playerName = hero.playerName})
+		end
+
+		EntityIterator(function(ent)
+			if (ent.wormWarUnit or ent.isRune) and ent:IsAlive() then
+				print("Removing")
+				ent:RemoveSelf()
+			end
+		end)]]
+
+		GameRules:SetGameWinner( Winner:GetTeam() )
+		GameRules:SetSafeToLeave( true )
+	end)
 end

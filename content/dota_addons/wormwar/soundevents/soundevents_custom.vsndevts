@@ -248,11 +248,11 @@
                     }
                     "volume_min"
                     {
-                        "value"     "0.300000"
+                        "value"     "0.400000"
                     }
                     "volume_max"
                     {
-                        "value"     "0.400000"
+                        "value"     "0.500000"
                     }
                     "pitch_min"
                     {
@@ -422,7 +422,7 @@
                     }
                     "volume_min"
                     {
-                        "value"     "0.400000"
+                        "value"     "0.500000"
                     }
                     "volume_max"
                     {
@@ -536,7 +536,7 @@
                     }
                     "volume_min"
                     {
-                        "value"     "0.400000"
+                        "value"     "0.500000"
                     }
                     "volume_max"
                     {

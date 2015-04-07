@@ -27,6 +27,7 @@
 		var _noPlayAgainBtn:Object;
 		var _shareFeedbackBtn:Object;
 		var timer:Object;
+		var timeTillPlayAgain:int = 10
 
 		//var newSubmitBtn:Object;
 		//var newScoreSlider:Object;
@@ -97,8 +98,8 @@
 		public function gameOverPlayerDataReceived(args:Object) : void {
 			if (visible == false) {
 				visible = true;
-				timeTillNextGameStarts.text = Globals.instance.GameInterface.Translate("#TimeTillNextGameStarts") + " 60";
-				timer = new Timer(1000, 60);
+				timeTillNextGameStarts.text = Globals.instance.GameInterface.Translate("#TimeTillNextGameStarts") + " " + timeTillPlayAgain;
+				timer = new Timer(1000, timeTillPlayAgain); // changed from 60 to test
 	            // designates listeners for the interval and completion events 
 	            timer.addEventListener(TimerEvent.TIMER, onTick); 
 	            timer.addEventListener(TimerEvent.TIMER_COMPLETE, onTimerComplete); 
@@ -119,7 +120,7 @@
 
         public function onTick(event:TimerEvent):void  
         {
-            timeTillNextGameStarts.text = Globals.instance.GameInterface.Translate("#TimeTillNextGameStarts") + " " + (60-event.target.currentCount);
+            timeTillNextGameStarts.text = Globals.instance.GameInterface.Translate("#TimeTillNextGameStarts") + " " + (timeTillPlayAgain-event.target.currentCount);
         } 
  
         public function onTimerComplete(event:TimerEvent):void 
@@ -150,6 +151,7 @@
 			noPlay.visible = true;
 			yesPlay.visible = false;
         	// show feedback blah blah
+        	visible = false
         	this.gameAPI.SendServerCommand("player_wants_to_leave");
         }
 
@@ -171,7 +173,7 @@
 
 				name.text = "";
 				noPlay.visible = false;
-				yesPlay.visible = false;
+				yesPlay.visible = true;
 			}
         }
 

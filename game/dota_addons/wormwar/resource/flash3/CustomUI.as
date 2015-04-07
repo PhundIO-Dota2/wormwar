@@ -1,6 +1,8 @@
 ﻿package {
 	import flash.display.MovieClip;
 	import flash.text.*;
+	import flash.events.*;
+	import flash.utils.Timer; 
 
 	//import some stuff from the valve lib
 	import ValveLib.Globals;
@@ -18,6 +20,31 @@
 		public var scaleRatioY:Number;
 		
 		private var holder:MovieClip = new MovieClip;
+		var cinematicStart:Boolean = false;
+
+		var firstPartLifespan:Number = 7;
+		var framesPerSec:Number = 60;
+
+		var currentPitch:Number = 50;
+		var startPitch:Number = 50;
+		var endPitch:Number = 10;
+		var pitchInterval:Number = (endPitch-startPitch)/(firstPartLifespan*framesPerSec)
+
+		var currentYaw:Number = 90;
+		var startYaw:Number = 90;
+		var endYaw:Number = 270;
+		var yawInterval:Number = (endYaw-startYaw)/(firstPartLifespan*framesPerSec)
+
+		var currentDist:Number = 1400;
+		var startingDist:Number = 1400;
+		var endingDist:Number = 800;
+		var distInterval:Number = (endingDist-startingDist)/(firstPartLifespan*framesPerSec)  // total of lifeSpan*60 frames in denominator.
+
+		var r_farz:Number = 5000;
+		var firstPartTimer:Object = null;
+		var firstPartOver:Boolean = false
+		var secondPartTimer:Object = null;
+		var secondPartOver:Boolean = false
 
 		//constructor, you usually will use onLoaded() instead
 		public function CustomUI() : void {
@@ -32,9 +59,12 @@
 			
 			this.gameAPI.SubscribeToGameEvent("show_main_ability", showMainAbility);
 			this.gameAPI.SubscribeToGameEvent("turn_off_waitforplayers", turnOffWaitForPlayers);
+			this.gameAPI.SubscribeToGameEvent("start_ending_cinematic", startEndingCinematic);
+			this.gameAPI.SubscribeToGameEvent("change_segments_to_win", change_segments_to_win);
 
 			this.addChild(holder);
-			
+			segmentsToWinLabel.visible = false
+
 			var oldChatSay:Function = globals.Loader_hud_chat.movieClip.gameAPI.ChatSay;
 			globals.Loader_hud_chat.movieClip.gameAPI.ChatSay = function(obj:Object, bool:Boolean){
 				var type:int = globals.Loader_hud_chat.movieClip.m_nLastMessageMode
@@ -59,8 +89,16 @@
 			this.playAgain.setup(this.gameAPI, this.globals);
 			//this.waitForPlayersBottom.setup(this.gameAPI, this.globals);
 
-			//this is not needed, but it shows you your UI has loaded (needs 'scaleform_spew 1' in console)
+			addEventListener(Event.ENTER_FRAME, myEnterFrame);
+
 			trace("[CustomUI] OnLoaded finished!");
+		}
+
+		public function change_segments_to_win(args:Object) : void {
+			var tf:TextFormat = segmentsToWinLabel.getTextFormat()
+			segmentsToWinLabel.text = Globals.instance.GameInterface.Translate("#SegmentsToWinLabel") + " " + args.amount
+			segmentsToWinLabel.setTextFormat(tf)
+			segmentsToWinLabel.visible = true
 		}
 
 		public function showMainAbility(args:Object) : void {
@@ -70,6 +108,64 @@
 			{
 				showAbilityButton();
 			}
+		}
+
+		private function myEnterFrame(e:Event) : void {
+			//trace("new frame.")
+			if (cinematicStart) {
+				if (firstPartTimer == null) {
+					firstPartTimer = new Timer(1000, firstPartLifespan)
+					firstPartTimer.addEventListener(TimerEvent.TIMER_COMPLETE, onFirstPartTimerComplete);
+					Globals.instance.GameInterface.SetConvar("r_farz", r_farz.toString());
+					Globals.instance.GameInterface.SetConvar("dota_camera_edgemove", "0");
+					Globals.instance.GameInterface.SetConvar("dota_camera_disable_zoom", "1");
+					trace("distInterval: " + distInterval)
+					trace("yawInterval: " + yawInterval)
+					trace("pitchInterval: " + pitchInterval)
+					trace("starting first part.")
+					firstPartTimer.start()
+				}
+
+				if (!firstPartOver) {
+					if (currentDist > endingDist) {
+						currentDist += distInterval;
+						//trace("currentDist: " + currentDist)
+						Globals.instance.GameInterface.SetConvar("dota_camera_distance", currentDist.toString());
+					}
+					if (currentYaw < endYaw) {
+						currentYaw += yawInterval
+						//trace("currentYaw: " + currentYaw)
+						Globals.instance.GameInterface.SetConvar("dota_camera_yaw", currentYaw.toString());
+					}
+					if (currentPitch > endPitch) {
+						currentPitch += pitchInterval
+						//trace("currentPitch " + currentPitch)
+						Globals.instance.GameInterface.SetConvar("dota_camera_pitch_max", currentPitch.toString());
+					}
+				}
+				if (firstPartOver && !secondPartOver) {
+					//trace("starting second part.")
+				}
+			}
+
+		}
+
+        public function onFirstPartTimerComplete(event:TimerEvent):void 
+        {
+        	trace("ending first part.")
+            // prep for second part
+			Globals.instance.GameInterface.SetConvar("dota_camera_edgemove", "1");
+			Globals.instance.GameInterface.SetConvar("dota_camera_disable_zoom", "0");
+			Globals.instance.GameInterface.SetConvar("dota_camera_distance", startingDist.toString())
+			Globals.instance.GameInterface.SetConvar("dota_camera_yaw", startYaw.toString());
+
+            firstPartOver = true;
+        } 
+
+		public function startEndingCinematic(args:Object) : void {
+			//Globals.instance.GameInterface.SetConvar
+			cinematicStart = true
+
 		}
 
 		public function turnOffWaitForPlayers(args:Object) : void {
@@ -121,6 +217,12 @@
 			ScreenWidth = re.ScreenWidth;
 			ScreenHeight = re.ScreenHeight;
 					
+			segmentsToWinLabel.width = segmentsToWinLabel.width*scaleRatioY
+			segmentsToWinLabel.height = segmentsToWinLabel.height*scaleRatioY
+
+			segmentsToWinLabel.x = ScreenWidth-segmentsToWinLabel.width
+			segmentsToWinLabel.y = segmentsToWinLabel.height-40
+
 			//pass the resize event to our module, we pass the width and height of the screen, as well as the INVERSE of the stage scaling ratios.
 			this.scoreBoard.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
 			this.waitForPlayers.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());

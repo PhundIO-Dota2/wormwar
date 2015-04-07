@@ -1,5 +1,13 @@
 -- GREAT UTILITY FUNCTIONS
 
+function EntityIterator(callback)
+	local ent = Entities:First()
+	while (ent) do
+		callback(ent)
+		ent = Entities:Next(ent)
+	end
+end
+
 function ReplaceAbility( unit, oldAbil, newAbil )
 	unit:RemoveAbility(oldAbil)
 	unit:AddAbility(newAbil)
@@ -178,7 +186,7 @@ function ColorIt( sStr, sColor )
 	elseif sColor == "pink" then
 		color = "DDA0DD"
 	elseif sColor == "red" then
-		color = "FF6347"
+		color = "FF0000"
 	elseif sColor == "cyan" then
 		color = "00FFFF"
 	elseif sColor == "yellow" then
@@ -192,7 +200,7 @@ function ColorIt( sStr, sColor )
 	elseif sColor == "light_green" then
 		color = "99FF00"
 	elseif sColor == "sky_blue" then
-		color = "008080"
+		color = "2ECCFA"
 	elseif sColor == "dark_green" then
 		color = "003300"
 	end

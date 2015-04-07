@@ -56,7 +56,6 @@
 	"summon_segment"
 	{
 		"BaseClass"             		"ability_datadriven"
-		//"AbilityTextureName"			"archmage_summon_water_elemental"
 		"MaxLevel" 						"1"
 	
 		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_POINT | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING"
@@ -73,12 +72,6 @@
 				"duration"				"60"
 			}	
 		}
-	
-		//"precache"
-		//{
-		//	"particle"					"particles/units/heroes/hero_morphling/morphling_replicate_finish.vpcf"
-		//	"soundfile"					"soundevents/game_sounds_heroes/game_sounds_morphling.vsndevts"
-		//}
 	
 		"OnSpellStart"
 		{
@@ -113,7 +106,6 @@
 		//-------------------------------------------------------------------------------------------------------------
 		"AbilityCastPoint"				"0"
 		"AbilityCooldown"				"0"
-		//"AbilityCastAnimation"			"ACT_DOTA_DISABLED"
 		"MaxLevel"						"1"
 		"AbilityManaCost"				"0"
 		
@@ -137,7 +129,6 @@
 		//-------------------------------------------------------------------------------------------------------------
 		"AbilityCastPoint"				"0"
 		"AbilityCooldown"				"0"
-		//"AbilityCastAnimation"			"ACT_DOTA_DISABLED"
 		"MaxLevel"						"1"
 		"AbilityManaCost"				"0"
 		
@@ -164,13 +155,11 @@
 		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_IMMEDIATE"
 		"BaseClass"						"ability_datadriven"
 		"AbilityTextureName"			"gyrocopter_homing_missile"
-		//"AbilityTextureName"			"gyrocopter_call_down"
 
 		// Stats
 		//-------------------------------------------------------------------------------------------------------------
 		"AbilityCastPoint"				"0"
 		"AbilityCooldown"				"0"
-		//"AbilityCastAnimation"			"ACT_DOTA_DISABLED"
 		"MaxLevel"						"1"
 		"AbilityManaCost"				"0"
 		
@@ -189,7 +178,7 @@
 		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_IMMEDIATE"
 		"BaseClass"						"ability_datadriven"
 		"AbilityTextureName"			"life_stealer_feast"
-		//"AbilityTextureName"			"shadow_shaman_voodoo"
+		"AbilityCastAnimation"			""
 		
 
 		// Stats
@@ -231,7 +220,6 @@
 		//-------------------------------------------------------------------------------------------------------------
 		"AbilityCastPoint"				"0"
 		"AbilityCooldown"				"0"
-		//"AbilityCastAnimation"			"ACT_DOTA_DISABLED"
 		"MaxLevel"						"1"
 		"AbilityManaCost"				"0"
 		
