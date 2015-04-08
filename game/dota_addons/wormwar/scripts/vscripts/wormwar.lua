@@ -9,15 +9,17 @@ DrawDebug = false
 UseCursorStream = false
 
 SEGMENTS_TO_WIN = 20
+MAX_NUM_RUNES = 0
+CurrNumRunes = 0
+NumPlayersRequiredForHighscoresEnabled = 3
+
 Bounds = {center = Vector(0,0,0), max = 4000, min = -4000}
+
 RUNE_REBIRTH_CHANCE = 33 -- if rune dies, this gives it a higher chance to respawn
-INFERNO_REBIRTH_CHANCE = 20 -- if inferno dies, this gives it a higher chance to respawn
--- TODO: HAVE MAX # OF RUNES ON MAP??
+INFERNO_REBIRTH_CHANCE = 33 -- if inferno dies, this gives it a higher chance to respawn
 
 if not Testing then
 	statcollection.addStats({ modID = 'XXXXXXXXXXXXXXXXXXX' })
-else
-	SEGMENTS_TO_WIN = 20
 end
 
 ColorStr = 
@@ -250,6 +252,7 @@ function WormWar:OnWormInGame(hero)
 						hero:EmitSound("Bottle.Cork")
 						--EmitSoundOnClient("Bottle.Cork", hero.player)
 						ent.isRune = false;
+						CurrNumRunes = CurrNumRunes - 1
 						if RandomInt(1, 100) <= RUNE_REBIRTH_CHANCE then
 							SpawnWormWarUnit(true, "rune") -- helps maintain rune count.
 						else
@@ -385,7 +388,9 @@ function WormWar:OnWormInGame(hero)
 			ShowCenterMsg("WORM WAR", 3)
 
 			for i,line in ipairs(lines) do
-				GameRules:SendCustomMessage(line, 0, 0)
+				Timers:CreateTimer(.8*i, function()
+					GameRules:SendCustomMessage(line, 0, 0)
+				end)
 			end
 		end)
 
@@ -449,7 +454,7 @@ function WormWar:OnWormInGame(hero)
 		--hero:AutoUpdateCamera()
 
 		-- Show a popup with game instructions.
-	    ShowGenericPopupToPlayer(hero.player, "#wormwar_instructions_title", "#wormwar_instructions_body", "", "", DOTA_SHOWGENERICPOPUP_TINT_SCREEN )
+	    --ShowGenericPopupToPlayer(hero.player, "#wormwar_instructions_title", "#wormwar_instructions_body", "", "", DOTA_SHOWGENERICPOPUP_TINT_SCREEN )
 
 		FireGameEvent("cgm_scoreboard_update_user", {playerID = hero:GetPlayerID(), playerName = hero.playerName})
 
@@ -479,8 +484,17 @@ end
 ]]
 function WormWar:OnGameInProgress()
 	--print("[WORMWAR] The game has officially begun")
+	-- Stats Collection Highscores
+	-- This is for Flash to know its steamID
+	j = {}
+	for i=0,9 do
+		j[i+1] = tostring(PlayerResource:GetSteamAccountID(i))
+	end
+	local result = table.concat(j, ",")
+	j = {ids=result}
+	FireGameEvent("stat_collection_steamID", j)
 
-
+	Timers:CreateTimer(1,function() FireGameEvent( 'retrieve_highscore', {}) end) --This will check for the highscore in GetDotaStats
 end
 
 function ClearWormBody( hero )
@@ -579,7 +593,7 @@ function AddSegments( hero, foodAmount )
 		--models/props_wildlife/wildlife_hercules_beetle001.vmdl
 		-- rememeber: head of the body == hero, is at the end of the hero.body table.
 		local lastSegment = hero.body[1]
-		local pos = lastSegment:GetAbsOrigin() + lastSegment:GetForwardVector()*-130
+		local pos = lastSegment:GetAbsOrigin() + lastSegment:GetForwardVector()*-90
 		if hero.segmentCasterDummy == nil then print("segmentCasterDummy nil.") end
 		ExecuteOrderFromTable({ UnitIndex = hero.segmentCasterDummy:GetEntityIndex(),
 			OrderType = DOTA_UNIT_ORDER_CAST_POSITION,
@@ -617,9 +631,11 @@ function WormWar:OnDisconnect(keys)
 	local networkid = keys.networkid
 	local reason = keys.reason
 	local userid = keys.userid
-	local ply = self.vUserIds[userid]
-	local hero = ply:GetAssignedHero()
-	ply.disconnected = true
+	local ply = self.vUserIds[keys.userid]
+	if ply ~= nil then
+		local hero = ply:GetAssignedHero()
+		ply.disconnected = true
+	end
 end
 
 -- The overall game state has changed
@@ -861,8 +877,10 @@ function SpawnWormWarUnit( waitTillSpawn, unitName )
 		if not unitName then
 			unitName = GetRandomUnit()
 		end
-		if unitName == "rune" then
+		if unitName == "rune" and CurrNumRunes < MAX_NUM_RUNES then
 			spawn_rune(pos)
+		elseif unitName == "rune" and CurrNumRunes >= MAX_NUM_RUNES then
+			unitName = GetRandomUnit()
 		elseif unitName == "inferno" then
 			pos = FindGoodPosition("inferno")
 			Creep:Init("inferno", pos)
@@ -965,6 +983,17 @@ function WormWar:InitWormWar()
 		ForceNextRune = args[1]
 		print("ForceNextRune: " .. ForceNextRune)
 	end, 'Goo_Bomb,Fiery_Jaw,Segment_Bomb,Crypt_Craving,Reverse', 0)
+
+	Convars:RegisterCommand( "HighscoreRetrieved", function(name, p)
+		local cmdPlayer = Convars:GetCommandClient()
+		if cmdPlayer then
+			local pID = cmdPlayer:GetPlayerID()
+			if pID > -1 and cmdPlayer.totalGamesWon == 0 then
+				cmdPlayer.totalGamesWon = tonumber(p)
+				print("P" .. pID .. " has an old high score of " .. cmdPlayer.totalGamesWon)
+			end
+		end
+	end, "A player has an old highscore", 0 )
 
 	Convars:RegisterCommand('test_worm_spawns', function(...)
 		local args = {...}
@@ -1183,6 +1212,7 @@ function WormWar:OnConnectFull(keys)
 	ply.userID = keys.userid
 	self.vUserIds[keys.userid] = ply
 	print("ply.userid: " .. ply.userID)
+	ply.totalGamesWon = 0
 
 	-- Update the Steam ID table
 	self.vSteamIds[PlayerResource:GetSteamAccountID(playerID)] = ply
@@ -1367,6 +1397,8 @@ function spawn_rune( point )
 	rune.wormWarUnit = true
 	rune.runeType = WormWar.runeTypes[RandomInt(1,#WormWar.runeTypes)]
 	WormWarUnitCount = WormWarUnitCount + 1
+	--print("wormwarunit")
+	CurrNumRunes = CurrNumRunes + 1
 	Timers:CreateTimer(.05, function() rune:EmitSound("General.Illusion.Create") end)
 end
 
@@ -1385,19 +1417,25 @@ function GetRandomPos(...)
 end
 
 function GetRandomUnit(  )
-	local roll = RandomInt(1, 80)
-	local unit = "pig"
-	--print("roll is " .. roll)
-	-- 10% inferno
-	if roll <= 10 then
-		unit = "inferno"
-	-- 20% chance to spawn pig
-	elseif roll <= 30 then
-		unit = "pig"
-	elseif roll <= 37 then
-		unit = "rune"
-	else
+	local unit = nil
+	local goodRoll = false
+	while not goodRoll do
+		goodRoll = true
 		unit = "sheep"
+		local roll = RandomInt(1, 100)
+		--print("roll is " .. roll)
+		-- 10% inferno
+		if roll <= 10 then
+			unit = "inferno"
+		-- 20% chance to spawn pig
+		elseif roll <= 30 then
+			unit = "pig"
+		elseif roll <= 40 and CurrNumRunes < MAX_NUM_RUNES then
+			unit = "rune"
+		end
+		if unit == "rune" and CurrNumRunes >= MAX_NUM_RUNES then
+			goodRoll = false
+		end
 	end
 	return unit
 end
@@ -1432,23 +1470,28 @@ function WormWar:InitMap(  )
 
 	-- determine the bounds for the map
 	if Testing then PlayerCount = 6 end
-	NumUnits = 30 -- increase by 35 each interval?
+	NumUnits = 30
 	if PlayerCount <= 3 then
-		Bounds = {max = 2016}
-		--SEGMENTS_TO_WIN = 60
+		Bounds = {max = 3016}
+		SEGMENTS_TO_WIN = 40
 	elseif PlayerCount <= 6 then
 		Bounds = {max = 4032}
 		NumUnits = 60
-		--SEGMENTS_TO_WIN = 60
+		SEGMENTS_TO_WIN = 60
 	elseif PlayerCount <= 9 then
 		Bounds = {max = 6048}
 		NumUnits = 90
-		--SEGMENTS_TO_WIN = 60
+		SEGMENTS_TO_WIN = 80
 	elseif PlayerCount <= 12 then
 		Bounds = {max = 8064}
 		NumUnits = 120
-		--SEGMENTS_TO_WIN = 60
+		SEGMENTS_TO_WIN = 100
 	end
+	if Testing then
+		SEGMENTS_TO_WIN = 12
+	end
+
+	MAX_NUM_RUNES = NumUnits*.1
 	FireGameEvent("change_segments_to_win", {amount=SEGMENTS_TO_WIN})
 
 	Bounds.min = -1*Bounds.max
@@ -1491,7 +1534,7 @@ function WormWar:InitMap(  )
 				badguy.isVisionDummy = true
 				table.insert(VisionDummies.GoodGuys, goodguy)
 				table.insert(VisionDummies.BadGuys, badguy)
-				print("vision_dummy")
+				--print("vision_dummy")
 				--DebugDrawCircle(Vector(x,y,GlobalDummy.z), Vector(0,0,255), 10, 1800, true, 4000)
 				--end
 			end)
@@ -1583,45 +1626,65 @@ function PlayCentaurBloodEffect( unit )
 end
 
 function WormWar:OnGameOver(  )
-	--PlayEndingCinematic()
-	for _,hero in ipairs(self.vHeroes) do
-		PlayerResource:SetCameraTarget(hero:GetPlayerID(), Winner)
+	--Play the ending cinematic
+	Timers:CreateTimer(1, function()
+		for _,hero in ipairs(self.vHeroes) do
+			PlayerResource:SetCameraTarget(hero:GetPlayerID(), Winner)
+		end
+		FireGameEvent("start_ending_cinematic", {})
+		-- allot time for the ending cinematic.
+		Timers:CreateTimer(9, function()
+			--[[for _,hero in pairs(self.vHeroes) do
+				FireGameEvent("game_over_player_data", {pID = hero:GetPlayerID(), playerName = hero.playerName})
+			end
+
+			EntityIterator(function(ent)
+				if (ent.wormWarUnit or ent.isRune) and ent:IsAlive() then
+					print("Removing")
+					ent:RemoveSelf()
+				end
+			end)]]
+
+			GameRules:SetGameWinner( Winner:GetTeam() )
+			GameRules:SetSafeToLeave( true )
+		end)
+	end)
+
+	-- send highscore stat for winner
+	if PlayerCount >= NumPlayersRequiredForHighscoresEnabled then
+		Winner.player.totalGamesWon = Winner.player.totalGamesWon + 1
+		FireGameEvent( 'update_highscore', { player_ID = Winner:GetPlayerID(), score = Winner.player.totalGamesWon } )
 	end
-	FireGameEvent("start_ending_cinematic", {})
 
 	for _,hero in ipairs(self.vHeroes) do
 		hero:AddNewModifier(hero, nil, "modifier_rooted", nil)
 	end
 
 	ShowCenterMsg(Winner.playerName .. " WINS!", 4)
+	Say(nil, Winner.colHex .. Winner.playerName .. COLOR_NONE .. "has reached " .. COLOR_LGREEN .. SEGMENTS_TO_WIN .. COLOR_NONE .. " Segments!!", false)
+
+	if PlayerCount >= NumPlayersRequiredForHighscoresEnabled then
+		Timers:CreateTimer(4, function()
+			Say(nil, Winner.colHex .. Winner.playerName .. COLOR_NONE .. "has won a total of " .. COLOR_LGREEN .. 
+				Winner:GetPlayerOwner().totalGamesWon .. COLOR_NONE .. " Worm War games to date!", false)
+		end)
+	end
+
 	local lines = 
 	{
 		[1] = ColorIt(Winner.playerName, Winner.colStr) .. ColorIt(" has won the game!", "blue"),
-		[2] = ColorIt("Thank you for playing ", "green") .. ColorIt("Worm War", "red") .. "!",
-		[3] = ColorIt("Please submit bugs and feedback on Worm War's Workshop Page at ", "blue") .. ColorIt("www.goo.gl/", "green"),
+		[2] = ColorIt("Thank you for playing ", "orange") .. ColorIt("WORM WAR!!", "green"),
+		[3] = ColorIt("Please submit bug reports and feedback on the Workshop Page: ", "blue") .. ColorIt("www.goo.gl/", "green"),
 		--[4] = " "
 	}
 
 	for i,line in ipairs(lines) do
-		GameRules:SendCustomMessage(line, 0, 0)
+		Timers:CreateTimer(1*i, function()
+			GameRules:SendCustomMessage(line, 0, 0)
+		end)
 	end
 
 	GameStarted = false
 
-	-- allot time for the ending cinematic.
-	Timers:CreateTimer(7, function()
-		--[[for _,hero in pairs(self.vHeroes) do
-			FireGameEvent("game_over_player_data", {pID = hero:GetPlayerID(), playerName = hero.playerName})
-		end
 
-		EntityIterator(function(ent)
-			if (ent.wormWarUnit or ent.isRune) and ent:IsAlive() then
-				print("Removing")
-				ent:RemoveSelf()
-			end
-		end)]]
-
-		GameRules:SetGameWinner( Winner:GetTeam() )
-		GameRules:SetSafeToLeave( true )
-	end)
 end

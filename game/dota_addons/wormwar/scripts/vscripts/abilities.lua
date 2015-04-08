@@ -27,7 +27,7 @@ function OnSegmentSummoned( keys )
 		hero.almostWon = true
 		local pos = hero:GetAbsOrigin()
 		--ShowCenterMsg(hero.playerName .. " needs only 10 segments to win!", 2)
-		Say(nil, hero.colHex .. hero.playerName .. COLOR_NONE .. "needs only " .. COLOR_DYELLOW .. "10 segments to win! " ..
+		Say(nil, hero.colHex .. hero.playerName .. COLOR_NONE .. "only needs " .. COLOR_LGREEN .. "10 segments to win! " ..
 			COLOR_RED .. "SQUISH HIM!!", false)
 
 	end
@@ -142,10 +142,11 @@ function Segment_Bomb( keys )
 				local segment = hero.body[1]
 				table.remove(hero.body, 1)
 				PopupMinus(hero, 1)
-				ParticleManager:CreateParticle("particles/dire_fx/bad_barracks_destruction_fire2.vpcf", PATTACH_ABSORIGIN_FOLLOW, segment)
-				--ParticleManager:CreateParticle("particles/dire_fx/bad_ancient002_destroy_fire.vpcf", PATTACH_OVERHEAD_FOLLOW, segment)
-				local p = ParticleManager:CreateParticle("particles/dire_fx/bad_barracks_destruction_fire.vpcf", PATTACH_ABSORIGIN, segment)
-				--ParticleManager:SetParticleControl(p, 0, segment:GetAbsOrigin())
+				ParticleManager:CreateParticle("particles/units/heroes/hero_lina/lina_spell_light_strike_array_explosion.vpcf", PATTACH_ABSORIGIN_FOLLOW, segment)
+				Timers:CreateTimer(.3, function()
+					ParticleManager:CreateParticle("particles/dire_fx/bad_barracks_destruction_fire2.vpcf", PATTACH_ABSORIGIN_FOLLOW, segment)
+				end)
+				--ParticleManager:CreateParticle("particles/units/heroes/hero_ogre_magi/ogre_magi_fireblast.vpcf", PATTACH_ABSORIGIN_FOLLOW, segment)
 				KillSegment(segment)
 			end
 			-- play impact sound

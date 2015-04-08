@@ -21,8 +21,9 @@
 		
 		private var holder:MovieClip = new MovieClip;
 		var cinematicStart:Boolean = false;
+		var currentHighscore:int = 0;
 
-		var firstPartLifespan:Number = 7;
+		var firstPartLifespan:Number = 10;
 		var framesPerSec:Number = 60;
 
 		var currentPitch:Number = 50;
@@ -61,6 +62,9 @@
 			this.gameAPI.SubscribeToGameEvent("turn_off_waitforplayers", turnOffWaitForPlayers);
 			this.gameAPI.SubscribeToGameEvent("start_ending_cinematic", startEndingCinematic);
 			this.gameAPI.SubscribeToGameEvent("change_segments_to_win", change_segments_to_win);
+			// highscore stuff
+			this.gameAPI.SubscribeToGameEvent("retrieve_highscore", this.retrieveHighscore);
+			this.gameAPI.SubscribeToGameEvent("update_highscore", this.updateHighscore);
 
 			this.addChild(holder);
 			segmentsToWinLabel.visible = false
@@ -94,6 +98,68 @@
 			trace("[CustomUI] OnLoaded finished!");
 		}
 
+		// highscore stuff
+		public function retrieveHighscore(args:Object) : void {
+			//trace("##retrieveHighscore");
+			//Get the Highscore for the player
+			globals.Loader_StatsCollectionHighscores.movieClip.GetPersonalLeaderboard('XXXXXXXXXXXXXXXXXXX', PersonalCallback);
+			//trace("##FINISHED SHOWING HIGHSCORES");
+		}
+
+		public function updateHighscore(args:Object) : void {
+			
+			//trace("##Fired Game event, Checking if Highscore should be updated");
+			if (globals.Players.GetLocalPlayer() == args.player_ID)
+			{
+				currentHighscore = args.score;
+				globals.Loader_StatsCollectionHighscores.movieClip.GetPersonalLeaderboard('XXXXXXXXXXXXXXXXXXX', PersonalCallback);
+			}
+			//trace("##Finished updateHighscore");
+		}
+
+		public function PersonalCallback(jsonInfo:Object) {
+			//trace("###HighscorePanel PersonalCallback");
+			var i:int = 0;
+			for (var highscoreID in jsonInfo) {
+				//trace("##Tracing Highscore number "+i);
+				i++;
+				//trace(highscoreID);
+				var leaderboard:Array = jsonInfo[highscoreID];
+				for each (var entry:Object in leaderboard) {
+					//trace(entry.highscoreValue);
+					//trace(entry.date);
+						
+					// Check to update highscore
+					if (entry.highscoreValue < currentHighscore)
+					{
+						globals.Loader_StatsCollectionHighscores.movieClip.SaveHighScore('XXXXXXXXXXXXXXXXXXX', 2, currentHighscore);
+						//this.setHighScore(currentHighscore);
+						trace("## HIGH SCORE SUCCESFULLY UPDATED TO "+currentHighscore);
+						this.gameAPI.SendServerCommand("HighscoreAchieved "+currentHighscore);
+					}
+					else
+					{
+						//trace("## Another higher score was found: ",entry.highscoreValue);
+						currentHighscore = entry.highscoreValue;
+						//this.setHighScore(currentHighscore);
+					}
+				}
+			}
+			if (i == 0) { 
+				//trace("## NO HIGHSCORES, DEFAULTING TO 0"); 
+				globals.Loader_StatsCollectionHighscores.movieClip.SaveHighScore('XXXXXXXXXXXXXXXXXXX', 2, 1);//Save 1 highscore because 0 is dumbo
+				currentHighscore = 0;
+				//this.setHighScore(currentHighscore);
+				//this.gameAPI.SendServerCommand("ShowFirstTime");
+			}
+			else
+			{
+				//Welcome back! your highscore is...
+			}
+			this.gameAPI.SendServerCommand("HighscoreRetrieved " + currentHighscore);
+		}
+		// end of highscore stuff
+
 		public function change_segments_to_win(args:Object) : void {
 			var tf:TextFormat = segmentsToWinLabel.getTextFormat()
 			segmentsToWinLabel.text = Globals.instance.GameInterface.Translate("#SegmentsToWinLabel") + " " + args.amount
@@ -102,8 +168,6 @@
 		}
 
 		public function showMainAbility(args:Object) : void {
-			trace("##Event Firing Detected")
-			trace("##Data: "+args.pID);
 			if (globals.Players.GetLocalPlayer() == args.pID)
 			{
 				showAbilityButton();
@@ -158,6 +222,7 @@
 			Globals.instance.GameInterface.SetConvar("dota_camera_disable_zoom", "0");
 			Globals.instance.GameInterface.SetConvar("dota_camera_distance", startingDist.toString())
 			Globals.instance.GameInterface.SetConvar("dota_camera_yaw", startYaw.toString());
+			Globals.instance.GameInterface.SetConvar("dota_camera_pitch_max", startPitch.toString());
 
             firstPartOver = true;
         } 
