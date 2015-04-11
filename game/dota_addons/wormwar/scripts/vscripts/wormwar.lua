@@ -1,7 +1,7 @@
 print ('[WORMWAR] wormwar.lua' )
 
 NEXT_FRAME = .01
-Testing = true
+Testing = false
 
 TestMoreAbilities = false
 OutOfWorldVector = Vector(5000, 5000, -200)
@@ -24,7 +24,7 @@ end
 
 ColorStr = 
 {	-- This is plyID+1
-	[1] = "blue",
+	[1] = "real_blue",
 	[2] = "cyan",
 	[3] = "purple",
 	[4] = "yellow",
@@ -89,7 +89,7 @@ end
   It can be used to initialize non-hero player state or adjust the hero selection (i.e. force random etc)
 ]]
 function WormWar:OnAllPlayersLoaded()
-	--print("[WORMWAR] All Players have loaded into the game")
+	print("[WORMWAR] All Players have loaded into the game")
 
 	PlayerCount = 0
 	for i=0,9 do
@@ -100,11 +100,23 @@ function WormWar:OnAllPlayersLoaded()
 			--local hero = CreateHeroForPlayer("npc_dota_hero_nyx_assassin", ply)
 		end
 	end
-
+	-- detect singleplayer mode
+	if PlayerCount == 1 then
+		SinglePlayerMode = true
+		DontInitWormYet = true
+		print("Initializing single player mode.")
+		PlayerCount = 10
+	end
 	self:InitMap()
 end
 
 function WormWar:OnWormInGame(hero)
+	--print("OnWormInGame")
+	if DontInitWormYet then
+		--print("Not initing worm.")
+		return
+	end
+
 	function hero:OnThink(  )
 		-- in this function the hero is definitely a worm.
 		if not hero:IsAlive() or self.gameOver then return end
@@ -113,7 +125,6 @@ function WormWar:OnWormInGame(hero)
 		-- update score
 		hero.score = #hero.body-1
 		if hero.score >= SEGMENTS_TO_WIN and not self.gameOver then
-			EmitGlobalSound("Wormtastic01")
 			local winnerParticle = ParticleManager:CreateParticle("particles/units/heroes/hero_legion_commander/legion_commander_duel_victory.vpcf", PATTACH_OVERHEAD_FOLLOW, hero)
 
 			self.gameOver = true
@@ -285,14 +296,24 @@ function WormWar:OnWormInGame(hero)
 			local nextSegment = hero.body[i+1]
 			local p1 = segment:GetAbsOrigin()
 			local p2 = nextSegment:GetAbsOrigin()
+
+			--[[ this should cutdown a lot on using the distance formula.
+			local velDir = (p2-p1):Normalized()
+			local shouldBeAtPos = p2 + velDir*-120
+			if IsPointWithinSquare(p1, shouldBeAtPos, 32) then
+				segment:SetPhysicsVelocity(Vector(0,0,0))
+			else
+				segment:SetForwardVector(velDir)
+				segment:SetPhysicsVelocity((shouldBeAtPos-p1):Normalized()*hero:GetBaseMoveSpeed())
+			end]]
+
 			local sub = p2-p1
 			local dir = sub:Normalized()
-			local dist = (p2-p1):Length2D()
+			local distSq = VectorDistanceSq(p1, p2)
 			--local newPos = p1 + dir*210
-			if dist > 130 then
+			if distSq > 130*130 then
 				segment:SetForwardVector(dir)
 				segment:SetPhysicsVelocity(hero:GetBaseMoveSpeed()*dir)
-				--ExecuteOrderFromTable({ UnitIndex = segment:GetEntityIndex(), OrderType = DOTA_UNIT_ORDER_MOVE_TO_POSITION, Position = newPos, Queue = false})
 			else
 				segment:SetPhysicsVelocity(Vector(0,0,0))
 			end
@@ -381,17 +402,21 @@ function WormWar:OnWormInGame(hero)
 	}
 
 	if not self.greetPlayers then
-		hero:EmitSound("Burrow")
+		Timers:CreateTimer(.2, function()
+			ConsoleCommands:SendToAllPlayers("stopsound")
+			Timers:CreateTimer(.06, function()
+				EmitGlobalSound("Burrow")
+				Timers:CreateTimer(.3, function()
+					EmitGlobalSound("WelcometoWormWar01")
+					ShowCenterMsg("WORM WAR", 3)
 
-		Timers:CreateTimer(1.2, function()
-			EmitGlobalSound("WelcometoWormWar01")
-			ShowCenterMsg("WORM WAR", 3)
-
-			for i,line in ipairs(lines) do
-				Timers:CreateTimer(.8*i, function()
-					GameRules:SendCustomMessage(line, 0, 0)
+					for i,line in ipairs(lines) do
+						Timers:CreateTimer(.8*i, function()
+							GameRules:SendCustomMessage(line, 0, 0)
+						end)
+					end
 				end)
-			end
+			end)
 		end)
 
 		if Testing then
@@ -422,6 +447,7 @@ function WormWar:OnWormInGame(hero)
 	hero.killStreak = 0
 	hero:MovementThink()
 
+	-- make a worm head dummy segment that stays on top of the nyx assasin.
 	local wormHeadDummy = CreateUnitByName("segment", hero:GetAbsOrigin(), false, nil, hero, hero:GetTeam())
 	wormHeadDummy.isWormHeadDummy = true
 	wormHeadDummy.hero = hero
@@ -431,8 +457,10 @@ function WormWar:OnWormInGame(hero)
 	wormHeadDummy.isSegment = true
 	wormHeadDummy:SetOriginalModel("models/development/invisiblebox.vmdl")
 	wormHeadDummy:SetModel("models/development/invisiblebox.vmdl")
-	InitAbilities(wormHeadDummy)
+	--InitAbilities(wormHeadDummy)
 	hero.wormHeadDummy = wormHeadDummy
+	GlobalDummy.segmentPassive:ApplyDataDrivenModifier(GlobalDummy, wormHeadDummy, "modifier_segment_passive", {})
+	GlobalDummy.segment_head_passive:ApplyDataDrivenModifier(GlobalDummy, wormHeadDummy, "modifier_segment_head_passive", {})
 
 	-- Do first time stuff for this player.
 	if not ply.firstTime then
@@ -446,8 +474,6 @@ function WormWar:OnWormInGame(hero)
 			hero.playerName = DummyNames[hero.plyID+1]
 		end
 		self:MakeLabelForPlayer(hero)
-		-- Store this hero handle in this table.
-		table.insert(self.vHeroes, hero)
 		ply.worm = hero
 
 		-- set auto camera up
@@ -456,12 +482,15 @@ function WormWar:OnWormInGame(hero)
 		-- Show a popup with game instructions.
 	    --ShowGenericPopupToPlayer(hero.player, "#wormwar_instructions_title", "#wormwar_instructions_body", "", "", DOTA_SHOWGENERICPOPUP_TINT_SCREEN )
 
-		FireGameEvent("cgm_scoreboard_update_user", {playerID = hero:GetPlayerID(), playerName = hero.playerName})
+		FireGameEvent("cgm_scoreboard_update_user", {playerID = hero:GetPlayerID(), playerName = ColorIt(hero.playerName, hero.colStr)})
 
 	    --print("hero:GetPlayerID(): " .. hero:GetPlayerID())
-		if not TestMoreAbilities then
-			FireGameEvent("show_main_ability", {pID = hero:GetPlayerID()})
-		end
+	    Timers:CreateTimer(.06, function()
+			if not TestMoreAbilities then
+				--print("show_main_ability")
+				FireGameEvent("show_main_ability", {pID = hero:GetPlayerID()})
+			end
+		end)
 
 		--local spikeParticle = ParticleManager:CreateParticle("particles/spikes/nyx_assassin_spiked_carapace.vpcf", PATTACH_ABSORIGIN_FOLLOW, hero)
 		--ParticleManager:SetParticleControlEnt(spikeParticle, 1, hero, 1, "follow_origin", hero:GetAbsOrigin(), true)
@@ -471,6 +500,8 @@ function WormWar:OnWormInGame(hero)
 	    	hero:CastAbilityNoTarget(hero:FindAbilityByName("summon_segment_caster_dummy"), 0)
 	    	Timers:CreateTimer(.06, function()
 	    		AddSegments(hero, 1)
+				-- Store this hero handle in this table.
+				table.insert(WormWar.vHeroes, hero)
 	    	end)
 	    end)
 		ply.firstTime = true
@@ -493,7 +524,6 @@ function WormWar:OnGameInProgress()
 	local result = table.concat(j, ",")
 	j = {ids=result}
 	FireGameEvent("stat_collection_steamID", j)
-
 	Timers:CreateTimer(1,function() FireGameEvent( 'retrieve_highscore', {}) end) --This will check for the highscore in GetDotaStats
 end
 
@@ -570,6 +600,7 @@ function KillWorm( hero )
 			return
 		end
 		local soundDummy = CreateUnitByName("dummy", positions[ptr], false, nil, nil, DOTA_TEAM_GOODGUYS)
+		GlobalDummy.dummyPassive:ApplyDataDrivenModifier(GlobalDummy, soundDummy, "modifier_dummy_passive", {})
 		soundDummy:EmitSound("ScarabDeath1")
 		soundDummy:ForceKill(true)
 		-- this helps to reduce too many sounds.
@@ -651,6 +682,9 @@ function WormWar:OnGameRulesStateChange(keys)
 	elseif newState == DOTA_GAMERULES_STATE_INIT then
 		Timers:RemoveTimer("alljointimer")
 	elseif newState == DOTA_GAMERULES_STATE_HERO_SELECTION then
+		Timers:CreateTimer(.03, function()
+			FireGameEvent("enter_hero_selection", {})
+		end)
 		local et = 1
 		if self.bSeenWaitForPlayers then
 			et = .01
@@ -939,10 +973,14 @@ function WormWar:InitWormWar()
 	GameRules:SetUseUniversalShopMode( true )
 	GameRules:SetSameHeroSelectionEnabled( true )
 	GameRules:SetHeroSelectionTime( 1 )
-	GameRules:SetPreGameTime( 0)
-	GameRules:SetPostGameTime( 30 )
+	GameRules:SetPreGameTime( 0 )
+	GameRules:SetPostGameTime( 50 )
 	GameRules:SetUseBaseGoldBountyOnHeroes(false)
 	GameRules:SetHeroMinimapIconScale( 1.4 )
+
+	GameRules:SetCustomVictoryMessageDuration( 0 )
+	GameRules:SetCustomGameEndDelay( 0 )
+
 	GameRules:SetCreepMinimapIconScale( 1.7 )
 	--GameRules:SetRuneMinimapIconScale( MINIMAP_RUNE_ICON_SIZE )
 	--GameRules:SetHideKillMessageHeaders(false)
@@ -988,9 +1026,12 @@ function WormWar:InitWormWar()
 		local cmdPlayer = Convars:GetCommandClient()
 		if cmdPlayer then
 			local pID = cmdPlayer:GetPlayerID()
-			if pID > -1 and cmdPlayer.totalGamesWon == 0 then
+			if pID > -1 and cmdPlayer.totalGamesWon and cmdPlayer.totalGamesWon == 0 then
 				cmdPlayer.totalGamesWon = tonumber(p)
 				print("P" .. pID .. " has an old high score of " .. cmdPlayer.totalGamesWon)
+			-- this is mainly for bots
+			elseif not cmdPlayer.totalGamesWon then
+				cmdPlayer.totalGamesWon = 0
 			end
 		end
 	end, "A player has an old highscore", 0 )
@@ -1109,13 +1150,18 @@ function WormWar:InitWormWar()
 		[5] = "Reverse",
 	}
 
-	GlobalDummy = CreateUnitByName("dummy", Vector(0,0,0), false, nil, nil, DOTA_TEAM_GOODGUYS)
+	GlobalDummy = CreateUnitByName("global_dummy", Vector(0,0,0), false, nil, nil, DOTA_TEAM_GOODGUYS)
+	self.globalDummy = GlobalDummy
+	GlobalDummy.sheepPassive = GlobalDummy:FindAbilityByName("sheep_passive")
+	GlobalDummy.pigPassive = GlobalDummy:FindAbilityByName("pig_passive")
+	GlobalDummy.runePassive = GlobalDummy:FindAbilityByName("rune_passive")
+	GlobalDummy.infernoPassive = GlobalDummy:FindAbilityByName("inferno_passive")
+	GlobalDummy.segmentPassive = GlobalDummy:FindAbilityByName("segment_passive")
+	GlobalDummy.sheepRun = GlobalDummy:FindAbilityByName("sheep_run")
+	GlobalDummy.dummyPassive = GlobalDummy:FindAbilityByName("dummy_passive")
+	GlobalDummy.segment_head_passive = GlobalDummy:FindAbilityByName("segment_head_passive")
 	print("GlobalDummy pos: " .. VectorString(GlobalDummy:GetAbsOrigin()))
 
-
-	-- Show the ending scoreboard immediately
-	GameRules:SetCustomGameEndDelay( 0 )
-	GameRules:SetCustomVictoryMessageDuration( 0 )
 
 	-- Main thinker
 	Timers:CreateTimer(function()
@@ -1124,6 +1170,15 @@ function WormWar:InitWormWar()
 		end
 
 		return NEXT_FRAME
+	end)
+
+	-- disable cheats
+	Timers:CreateTimer(.06, function()
+		if not DontDisableCheats then
+			SendToConsole("dota_workshoptest 0")
+			SendToConsole("sv_cheats 0")
+			return 1
+		end
 	end)
 
 	self.HeroesKV = LoadKeyValues("scripts/npc/npc_heroes_custom.txt")
@@ -1175,8 +1230,6 @@ function WormWar:CaptureWormWar()
 			mode:SetHUDVisible(11, false)
 			mode:SetHUDVisible(12, false)
 			mode:SetHUDVisible(5, false) --Inventory
-			Convars:SetInt("dota_render_crop_height", 0) -- Renders the bottom part of the screen
-			Convars:SetInt("dota_draw_portrait", 0)
 			mode:SetHUDVisible( DOTA_HUD_VISIBILITY_SHOP_SUGGESTEDITEMS, false )
 		end
 
@@ -1222,11 +1275,6 @@ function WormWar:OnConnectFull(keys)
 		self.vBroadcasters[keys.userid] = 1
 		return
 	end
-
-	if playerID >= 0 and playerID < 10 then
-		--CreateHeroForPlayer("npc_dota_hero_nyx_assassin", ply)
-	end
-
 end
 
 -- This is an example console command
@@ -1273,20 +1321,20 @@ function Creep:Init(name, loc)
 	unit.wormWarUnit = true
 	WormWarUnitCount = WormWarUnitCount + 1
 	--print("in creep:init, WormWarUnitCount: " .. WormWarUnitCount)
-
 	if name == "pig" then
 		unit.isFood = true
-		unit.foodAmount = 2;
+		unit.foodAmount = 2
+		GlobalDummy.pigPassive:ApplyDataDrivenModifier(GlobalDummy, unit, "modifier_pig_passive", {})
 	elseif name == "sheep" then
 		unit.isSheep = true
 		unit.isFood = true
 		unit.foodAmount = 1
-		--unit.goldenParticle = ParticleManager:CreateParticle("particles/golden_sheep/courier_international_2013_se.vpcf", PATTACH_ABSORIGIN_FOLLOW, unit)
-		--ParticleManager:SetParticleControlEnt(unit.goldenParticle, 1, unit, 1, "follow_origin", unit:GetAbsOrigin(), true)
+		GlobalDummy.sheepPassive:ApplyDataDrivenModifier(GlobalDummy, unit, "modifier_sheep_passive", {})
 	elseif name == "inferno" then
 		unit.makesWormDie = true
 		unit.isInferno = true
-		unit:FindAbilityByName("inferno_passive"):SetLevel(1)
+		GlobalDummy.infernoPassive:ApplyDataDrivenModifier(GlobalDummy, unit, "modifier_inferno_passive", {})
+
 		unit:EmitSound("Hero_Invoker.ForgeSpirit")
 	end
 
@@ -1347,14 +1395,10 @@ function Creep:Init(name, loc)
 		end
 		-- we have to handle the sheep animation
 		if unit.isSheep then
-			if unit:IsIdle() and unit:HasAbility("sheep_run") then
-				if unit:HasModifier("modifier_sheep_run") then
-					unit:RemoveModifierByName("modifier_sheep_run")
-				end
-				unit:RemoveAbility("sheep_run")
-			elseif not unit:IsIdle() and not unit:HasAbility("sheep_run") then
-				unit:AddAbility("sheep_run")
-				unit:FindAbilityByName("sheep_run"):SetLevel(1)
+			if unit:IsIdle() and unit:HasModifier("modifier_sheep_run") then
+				unit:RemoveModifierByName("modifier_sheep_run")
+			elseif not unit:IsIdle() and not unit:HasModifier("modifier_sheep_run") then
+				GlobalDummy.sheepRun:ApplyDataDrivenModifier(GlobalDummy, unit, "modifier_sheep_run", {})
 			end
 		end
 	end
@@ -1381,6 +1425,7 @@ function MovePlayerCameraToPos( hero, pos, force )
 		hero.cameraDummy:RemoveSelf()
 	end
 	hero.cameraDummy = CreateUnitByName("dummy", pos, false, nil, nil, DOTA_TEAM_GOODGUYS)
+	GlobalDummy.dummyPassive:ApplyDataDrivenModifier(GlobalDummy, hero.cameraDummy, "modifier_dummy_passive", {})
 
 	PlayerResource:SetCameraTarget(0, hero.cameraDummy)
 	hero.lastCameraUpdateTime = currTime
@@ -1390,6 +1435,8 @@ end
 function spawn_rune( point )
 
 	local rune = CreateUnitByName("rune", point, true, nil, nil, DOTA_TEAM_NEUTRALS)
+	GlobalDummy.runePassive:ApplyDataDrivenModifier(GlobalDummy, rune, "modifier_rune_passive", {})
+
 	local runeParticle = ParticleManager:CreateParticle("particles/generic_gameplay/rune_illusion.vpcf", PATTACH_ABSORIGIN_FOLLOW, rune)
 	local runePos = rune:GetAbsOrigin()
 	--ParticleManager:SetParticleControl(runeParticle, 0, Vector(runePos.x, runePos.y, runePos.z+10))
@@ -1469,7 +1516,7 @@ function WormWar:InitMap(  )
 	-- 4 intervals spaced out 2016 units apart.
 
 	-- determine the bounds for the map
-	if Testing then PlayerCount = 6 end
+	--if Testing then PlayerCount = 6 end
 	NumUnits = 30
 	if PlayerCount <= 3 then
 		Bounds = {max = 3016}
@@ -1479,16 +1526,16 @@ function WormWar:InitMap(  )
 		NumUnits = 60
 		SEGMENTS_TO_WIN = 60
 	elseif PlayerCount <= 9 then
-		Bounds = {max = 6048}
+		Bounds = {max = 5048}
 		NumUnits = 90
-		SEGMENTS_TO_WIN = 80
+		SEGMENTS_TO_WIN = 70
 	elseif PlayerCount <= 12 then
-		Bounds = {max = 8064}
-		NumUnits = 120
-		SEGMENTS_TO_WIN = 100
+		Bounds = {max = 7064} --8064
+		NumUnits = 100
+		SEGMENTS_TO_WIN = 70
 	end
 	if Testing then
-		SEGMENTS_TO_WIN = 12
+		SEGMENTS_TO_WIN = 10
 	end
 
 	MAX_NUM_RUNES = NumUnits*.1
@@ -1530,6 +1577,9 @@ function WormWar:InitMap(  )
 				--if GridNav:IsTraversable(Vector(x,y,GlobalDummy.z)) and not GridNav:IsBlocked(Vector(x,y,GlobalDummy.z)) then
 				local goodguy = CreateUnitByName("vision_dummy", Vector(x,y,GlobalDummy.z), false, nil, nil, DOTA_TEAM_GOODGUYS)
 				local badguy = CreateUnitByName("vision_dummy", Vector(x,y,GlobalDummy.z), false, nil, nil, DOTA_TEAM_BADGUYS)
+				GlobalDummy.dummyPassive:ApplyDataDrivenModifier(GlobalDummy, goodguy, "modifier_dummy_passive", {})
+				GlobalDummy.dummyPassive:ApplyDataDrivenModifier(GlobalDummy, badguy, "modifier_dummy_passive", {})
+
 				goodguy.isVisionDummy = true
 				badguy.isVisionDummy = true
 				table.insert(VisionDummies.GoodGuys, goodguy)
@@ -1576,17 +1626,6 @@ function WormWar:InitMap(  )
 		self.WallParticles[i] = wallParticle
 	end
 
-	-- spawn the units
-	for i=1,NumUnits do
-		local pos = GetRandomPos()
-		local unitName = GetRandomUnit()
-		if unitName == "rune" then
-			spawn_rune(pos)
-		else
-			Creep:Init(unitName, pos)
-		end
-	end
-
 	if not InitialHeroSpawn then
 		Timers:CreateTimer(.5, function()
 			for i,ent in ipairs(Entities:FindAllByClassname("info_player_start_*")) do
@@ -1599,9 +1638,31 @@ function WormWar:InitMap(  )
 					local hero = CreateHeroForPlayer("npc_dota_hero_nyx_assassin", ply)
 				end
 			end
+
+			Timers:CreateTimer(.06, function()
+				if SinglePlayerMode then
+					WormWar:InitSinglePlayerMode()
+				end
+			end)
+
+			local timeTillUnitsSpawn = .1
+			if SinglePlayerMode then timeTillUnitsSpawn = .5 end
+			Timers:CreateTimer(timeTillUnitsSpawn, function()
+				-- spawn the units
+				for i=1,NumUnits do
+					local pos = GetRandomPos()
+					local unitName = GetRandomUnit()
+					if unitName == "rune" then
+						spawn_rune(pos)
+					else
+						Creep:Init(unitName, pos)
+					end
+				end
+			end)
+
 			print("initMap complete.")
+			InitialHeroSpawn = true
 		end)
-		InitialHeroSpawn = true
 	else
 		for i,_hero in ipairs(WormWar.vHeroes) do
 			_hero:SetAbsOrigin(FindGoodPosition("worm"))
@@ -1626,29 +1687,43 @@ function PlayCentaurBloodEffect( unit )
 end
 
 function WormWar:OnGameOver(  )
+	--ConsoleCommands:SendToAllPlayers("stopsound")
+	Timers:CreateTimer(.06, function()
+		EmitGlobalSound("Wormtastic01")
+		Timers:CreateTimer(.2, function()
+			EmitGlobalSound("DarkVictory")
+		end)
+	end)
+
 	--Play the ending cinematic
 	Timers:CreateTimer(1, function()
 		for _,hero in ipairs(self.vHeroes) do
 			PlayerResource:SetCameraTarget(hero:GetPlayerID(), Winner)
 		end
 		FireGameEvent("start_ending_cinematic", {})
-		-- allot time for the ending cinematic.
-		Timers:CreateTimer(9, function()
-			--[[for _,hero in pairs(self.vHeroes) do
-				FireGameEvent("game_over_player_data", {pID = hero:GetPlayerID(), playerName = hero.playerName})
-			end
 
-			EntityIterator(function(ent)
-				if (ent.wormWarUnit or ent.isRune) and ent:IsAlive() then
-					print("Removing")
-					ent:RemoveSelf()
-				end
-			end)]]
-
-			GameRules:SetGameWinner( Winner:GetTeam() )
-			GameRules:SetSafeToLeave( true )
+		Timers:CreateTimer(8, function()
+			--GameRules:SetGameWinner( Winner:GetTeam() )
+			--GameRules:SetSafeToLeave( true )
+			Timers:CreateTimer(.06, function()
+				-- remove annoying "RADIANT VICTORY" noise.
+				--ConsoleCommands:SendToAllPlayers("stopsound")
+				FireGameEvent("display_custom_end_screen", {})
+				statcollection.sendStats()
+			end)
 		end)
 	end)
+
+	--[[for _,hero in pairs(self.vHeroes) do
+		FireGameEvent("game_over_player_data", {pID = hero:GetPlayerID(), playerName = hero.playerName})
+	end
+
+	EntityIterator(function(ent)
+		if (ent.wormWarUnit or ent.isRune) and ent:IsAlive() then
+			print("Removing")
+			ent:RemoveSelf()
+		end
+	end)]]
 
 	-- send highscore stat for winner
 	if PlayerCount >= NumPlayersRequiredForHighscoresEnabled then
@@ -1687,4 +1762,70 @@ function WormWar:OnGameOver(  )
 	GameStarted = false
 
 
+end
+
+function WormWar:InitSinglePlayerMode(  )
+	DontDisableCheats = true
+	SendToConsole("dota_workshoptest 1")
+	SendToConsole("sv_cheats 1")
+
+	local realPlayersID = -1
+	for _,nyx in ipairs(Entities:FindAllByClassname("npc_dota_hero_nyx_assassin")) do
+		if nyx:GetPlayerOwner() ~= nil then
+			realPlayersID = nyx:GetPlayerID()
+			print("realPlayersID is " .. realPlayersID)
+		end
+	end
+
+	for i=1,9 do
+		Timers:CreateTimer(i*.03, function()
+			if i < 5 then -- spawn 4 ally nyx's.
+				--print("spawning nyx.")
+				SendToConsole("dota_create_unit npc_dota_hero_nyx_assassin")
+			else -- spawn 5 enemy nyx's.
+				--print("spawning nyx.")
+				SendToConsole("dota_create_unit npc_dota_hero_nyx_assassin enemy")
+			end
+		end)
+	end
+
+	Timers:CreateTimer(2, function()
+		print("curr amount of nyx: " .. #Entities:FindAllByClassname("npc_dota_hero_nyx_*"))
+		DontInitWormYet = false
+		local worms = Entities:FindAllByClassname("npc_dota_hero_nyx_*")
+		for _,worm in ipairs(worms) do
+			--print("Found worm with pID: " .. worm:GetPlayerID())
+			if worm:GetPlayerID() ~= realPlayersID then
+				worm:SetAbsOrigin(FindGoodPosition("worm"))
+				Timers:CreateTimer(.03, function()
+					WormWar:OnWormInGame(worm)
+					Timers:CreateTimer(.03, function()
+						WormBot:Init(worm)
+					end)
+				end)
+			end
+		end
+		Timers:CreateTimer(.1, function()
+			WormWar:OnWormInGame(PlayerResource:GetPlayer(realPlayersID):GetAssignedHero())
+		end)
+	end)
+
+	--[[local botCount = 0
+	Timers:CreateTimer(9*.03+.06, function() -- execute this after all the worms have spawned. currently they are all on top of each other.
+		DontInitWormYet = false
+		local worms = Entities:FindAllByClassname("npc_dota_hero_nyx_assassin")
+		for _,worm in ipairs(worms) do
+			print("Found worm with pID: " .. worm:GetPlayerID())
+			if worm:GetPlayerID() ~= realPlayersID then
+				worm:SetAbsOrigin(FindGoodPosition("worm"))
+				Timers:CreateTimer(.06, function()
+					--WormWar:OnWormInGame(worm)
+					Timers:CreateTimer(.03, function()
+						WormBot:Init(worm)
+					end)
+				end)
+			end
+		end
+	end)]]
+	DontDisableCheats = false
 end

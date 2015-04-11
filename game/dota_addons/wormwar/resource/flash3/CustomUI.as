@@ -22,8 +22,9 @@
 		private var holder:MovieClip = new MovieClip;
 		var cinematicStart:Boolean = false;
 		var currentHighscore:int = 0;
+		var segmentsToWinLabel:TextField = null;
 
-		var firstPartLifespan:Number = 10;
+		var firstPartLifespan:Number = 9;
 		var framesPerSec:Number = 60;
 
 		var currentPitch:Number = 50;
@@ -66,7 +67,11 @@
 			this.gameAPI.SubscribeToGameEvent("retrieve_highscore", this.retrieveHighscore);
 			this.gameAPI.SubscribeToGameEvent("update_highscore", this.updateHighscore);
 
+			this.gameAPI.SubscribeToGameEvent("enter_hero_selection", this.enter_hero_selection);
+			this.gameAPI.SubscribeToGameEvent("display_custom_end_screen", this.display_custom_end_screen);
+
 			this.addChild(holder);
+			segmentsToWinLabel = segmentsToWin.segmentsToWinLabel
 			segmentsToWinLabel.visible = false
 
 			var oldChatSay:Function = globals.Loader_hud_chat.movieClip.gameAPI.ChatSay;
@@ -81,21 +86,29 @@
 
 			//let the client rescale the UI
 			Globals.instance.resizeManager.AddListener(this);
-			globals.Loader_shared_heroselectorandloadout.movieClip.heroDock.repickButton.enabled = false
-			globals.Loader_shared_heroselectorandloadout.movieClip.heroDock.playGameButton.enabled = false
 
 			//pass the gameAPI on to the modules
 			this.scoreBoard.setup(this.gameAPI, this.globals);
 			this.waitForPlayers.setup(this.gameAPI, this.globals);
 			this.waitForPlayers2.setup(this.gameAPI, this.globals);
-			this.credits.setup(this.gameAPI, this.globals);
 			this.feedback.setup(this.gameAPI, this.globals);
 			this.playAgain.setup(this.gameAPI, this.globals);
+			this.customEndScreen.setup(this.gameAPI, this.globals);
 			//this.waitForPlayersBottom.setup(this.gameAPI, this.globals);
 
 			addEventListener(Event.ENTER_FRAME, myEnterFrame);
 
 			trace("[CustomUI] OnLoaded finished!");
+		}
+
+		public function display_custom_end_screen(args:Object) : void {
+			holder.visible = false
+			customEndScreen.visible = true
+		}
+
+		public function enter_hero_selection(args:Object) : void {
+			globals.Loader_shared_heroselectorandloadout.movieClip.heroDock.repickButton.enabled = false
+			globals.Loader_shared_heroselectorandloadout.movieClip.heroDock.playGameButton.enabled = false
 		}
 
 		// highscore stuff
@@ -170,6 +183,9 @@
 		public function showMainAbility(args:Object) : void {
 			if (globals.Players.GetLocalPlayer() == args.pID)
 			{
+				globals.Loader_actionpanel.movieClip.visible = false
+				Globals.instance.GameInterface.SetConvar("dota_render_crop_height", "0")
+				Globals.instance.GameInterface.SetConvar("dota_draw_portrait", "0")
 				showAbilityButton();
 			}
 		}
@@ -239,8 +255,6 @@
 		}
 
 		public function showAbilityButton(): void {
-			globals.Loader_actionpanel.movieClip.visible = false;
-			
 			// Special thanks to zed for this
 			var abHold = globals.Loader_actionpanel.movieClip.middle.abilities["Ability0"];
 			var manaHold = globals.Loader_actionpanel.movieClip.middle.abilities["abilityMana0"];
@@ -282,19 +296,19 @@
 			ScreenWidth = re.ScreenWidth;
 			ScreenHeight = re.ScreenHeight;
 					
-			segmentsToWinLabel.width = segmentsToWinLabel.width*scaleRatioY
-			segmentsToWinLabel.height = segmentsToWinLabel.height*scaleRatioY
+			segmentsToWin.width = segmentsToWin.width*scaleRatioY
+			segmentsToWin.height = segmentsToWin.height*scaleRatioY
 
-			segmentsToWinLabel.x = ScreenWidth-segmentsToWinLabel.width
-			segmentsToWinLabel.y = segmentsToWinLabel.height-40
+			segmentsToWin.x = ScreenWidth-segmentsToWin.width
+			segmentsToWin.y = 3
 
 			//pass the resize event to our module, we pass the width and height of the screen, as well as the INVERSE of the stage scaling ratios.
 			this.scoreBoard.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
 			this.waitForPlayers.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
 			this.waitForPlayers2.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
-			this.credits.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
 			this.feedback.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
 			this.playAgain.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
+			this.customEndScreen.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
 			//this.waitForPlayersBottom.screenResize(re.ScreenWidth, re.ScreenHeight, scaleRatioY, scaleRatioY, re.IsWidescreen());
 		}
 	}

@@ -580,7 +580,7 @@
 		
 		"Modifiers"
 		{
-			"modifier_rune_passive"
+			"modifier_inferno_passive"
 			{
 				"Passive"				"1"
 				"IsHidden"				"1"
@@ -700,7 +700,7 @@
 		
 		"Modifiers"
 		{
-			"modifier_golden_sheep"
+			"modifier_sheep_passive"
 			{
 				"Passive"				"1"
 				"IsHidden"				"1"
@@ -710,6 +710,28 @@
 					"MODIFIER_STATE_UNSELECTABLE"			"MODIFIER_STATE_VALUE_ENABLED"
 					"MODIFIER_STATE_NO_HEALTH_BAR"			"MODIFIER_STATE_VALUE_ENABLED"
 					"MODIFIER_STATE_NO_UNIT_COLLISION"		"MODIFIER_STATE_VALUE_ENABLED"
+				}
+			}
+		}
+	}
+
+	"segment_head_passive"
+	{
+		"BaseClass"             		"ability_datadriven"
+		"MaxLevel" 						"1"
+	
+		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_PASSIVE | DOTA_ABILITY_BEHAVIOR_HIDDEN"
+		
+		"Modifiers"
+		{
+			"modifier_segment_head_passive"
+			{
+				"Passive"				"1"
+				"IsHidden"				"1"
+
+				"States"
+				{
+					"MODIFIER_STATE_NOT_ON_MINIMAP"		"MODIFIER_STATE_VALUE_ENABLED"
 				}
 			}
 		}
@@ -729,7 +751,7 @@
 		
 		"Modifiers"
 		{
-			"modifier_bug_run"
+			"modifier_segment_passive"
 			{
 				"Passive"				"1"
 				"IsHidden"				"1"	
@@ -740,454 +762,6 @@
 					"MODIFIER_STATE_UNSELECTABLE"		"MODIFIER_STATE_VALUE_ENABLED"
 					"MODIFIER_STATE_NO_HEALTH_BAR"			"MODIFIER_STATE_VALUE_ENABLED"
 					"MODIFIER_STATE_NO_UNIT_COLLISION"	"MODIFIER_STATE_VALUE_ENABLED"
-				}
-			}
-		}
-	}
-
-	"dark_seer_wall_of_discord_4"
-	{
-		// General
-		//-------------------------------------------------------------------------------------------------------------
-		"BaseClass"						"ability_datadriven"
-		"AbilityTextureName"			"dark_seer_wall_of_replica"
-		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_POINT"
-		"AbilityUnitDamageType"			"DAMAGE_TYPE_MAGICAL"
-		
-		// Casting
-		//-------------------------------------------------------------------------------------------------------------
-		"AbilityCastRange"				"9000"
-		"AbilityCastPoint"				"0"
-
-		// Time		
-		//-------------------------------------------------------------------------------------------------------------
-		"AbilityCooldown"				"0"
-
-		// Cost
-		//-------------------------------------------------------------------------------------------------------------
-		"AbilityManaCost"				"0"
-
-		// Special
-		"AbilitySpecial"
-		{
-			"01"
-			{
-				"var_type"				"FIELD_FLOAT"
-				"duration"				"9999"
-			}
-			"02"
-			{
-				"var_type"				"FIELD_INTEGER"
-				"damage"				"0"
-			}
-			"03"
-			{
-				"var_type"				"FIELD_INTEGER"
-				"width"					"16128" // this is Bounds.max*2
-			}
-		}
-
-		"OnSpellStart"
-		{
-			"CreateThinker"
-			{
-				"ModifierName"	"dark_seer_wall_of_discord_thinker"
-				"Target"		"POINT"
-			}
-		}
-
-		"Modifiers"
-		{
-			"dark_seer_wall_of_discord_thinker"
-			{
-				"Duration" "%duration"
-				"ThinkInterval" "0.25"
-				"OnIntervalThink"
-				{
-					"ApplyModifier"
-					{
-						"ModifierName"	"modifier_dark_seer_wall_of_discord_target"
-						"Target"
-						{
-							"Center"	"TARGET"
-							"Line"
-							{
-								"Length"	"%width"
-								"Thickness"	"50"
-							}
-							"Teams"		"DOTA_UNIT_TARGET_TEAM_ENEMY"
-							"Types"		"DOTA_UNIT_TARGET_CREEP | DOTA_UNIT_TARGET_HERO"
-						}
-					}
-				}
-
-				"OnCreated"
-				{
-					"AttachEffect"
-					{
-						"Target"			"TARGET"
-						"EffectName"		"particles/units/heroes/hero_dark_seer/dark_seer_wall_of_replica.vpcf"
-						"EffectAttachType"	"start_at_customorigin"
-						"EffectLineTarget"	"TARGET"
-						"EffectLineLength"	"%width"
-					}
-				}
-			}
-			
-			"modifier_dark_seer_wall_of_discord_target"
-			{
-				"Duration" "1" // Encourage you to drag them back and forth through the wall
-				"OnCreated"
-				{
-					"Damage"
-					{
-						"Type"		"DAMAGE_TYPE_MAGICAL"
-						"Damage"	"%damage"
-						"Target"	"TARGET"
-					}
-
-					"AttachEffect"
-					{
-						"Target"			"TARGET"
-						"EffectName"		"particles/units/heroes/hero_dark_seer/dark_seer_wall_of_replica_replicate.vpcf"
-						"EffectAttachType"	"follow_origin"
-					}
-				}
-			}
-		}
-	}
-
-	"dark_seer_wall_of_discord_3"
-	{
-		// General
-		//-------------------------------------------------------------------------------------------------------------
-		"BaseClass"						"ability_datadriven"
-		"AbilityTextureName"			"dark_seer_wall_of_replica"
-		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_POINT"
-		"AbilityUnitDamageType"			"DAMAGE_TYPE_MAGICAL"
-		
-		// Casting
-		//-------------------------------------------------------------------------------------------------------------
-		"AbilityCastRange"				"9000"
-		"AbilityCastPoint"				"0"
-
-		// Time		
-		//-------------------------------------------------------------------------------------------------------------
-		"AbilityCooldown"				"0"
-
-		// Cost
-		//-------------------------------------------------------------------------------------------------------------
-		"AbilityManaCost"				"0"
-
-		// Special
-		"AbilitySpecial"
-		{
-			"01"
-			{
-				"var_type"				"FIELD_FLOAT"
-				"duration"				"9999"
-			}
-			"02"
-			{
-				"var_type"				"FIELD_INTEGER"
-				"damage"				"0"
-			}
-			"03"
-			{
-				"var_type"				"FIELD_INTEGER"
-				"width"					"12096" // this is Bounds.max*2
-			}
-		}
-
-		"OnSpellStart"
-		{
-			"CreateThinker"
-			{
-				"ModifierName"	"dark_seer_wall_of_discord_thinker"
-				"Target"		"POINT"
-			}
-		}
-
-		"Modifiers"
-		{
-			"dark_seer_wall_of_discord_thinker"
-			{
-				"Duration" "%duration"
-				"ThinkInterval" "0.25"
-				"OnIntervalThink"
-				{
-					"ApplyModifier"
-					{
-						"ModifierName"	"modifier_dark_seer_wall_of_discord_target"
-						"Target"
-						{
-							"Center"	"TARGET"
-							"Line"
-							{
-								"Length"	"%width"
-								"Thickness"	"50"
-							}
-							"Teams"		"DOTA_UNIT_TARGET_TEAM_ENEMY"
-							"Types"		"DOTA_UNIT_TARGET_CREEP | DOTA_UNIT_TARGET_HERO"
-						}
-					}
-				}
-
-				"OnCreated"
-				{
-					"AttachEffect"
-					{
-						"Target"			"TARGET"
-						"EffectName"		"particles/units/heroes/hero_dark_seer/dark_seer_wall_of_replica.vpcf"
-						"EffectAttachType"	"start_at_customorigin"
-						"EffectLineTarget"	"TARGET"
-						"EffectLineLength"	"%width"
-					}
-				}
-			}
-			
-			"modifier_dark_seer_wall_of_discord_target"
-			{
-				"Duration" "1" // Encourage you to drag them back and forth through the wall
-				"OnCreated"
-				{
-					"Damage"
-					{
-						"Type"		"DAMAGE_TYPE_MAGICAL"
-						"Damage"	"%damage"
-						"Target"	"TARGET"
-					}
-
-					"AttachEffect"
-					{
-						"Target"			"TARGET"
-						"EffectName"		"particles/units/heroes/hero_dark_seer/dark_seer_wall_of_replica_replicate.vpcf"
-						"EffectAttachType"	"follow_origin"
-					}
-				}
-			}
-		}
-	}
-
-	"dark_seer_wall_of_discord_2"
-	{
-		// General
-		//-------------------------------------------------------------------------------------------------------------
-		"BaseClass"						"ability_datadriven"
-		"AbilityTextureName"			"dark_seer_wall_of_replica"
-		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_POINT"
-		"AbilityUnitDamageType"			"DAMAGE_TYPE_MAGICAL"
-		
-		// Casting
-		//-------------------------------------------------------------------------------------------------------------
-		"AbilityCastRange"				"9000"
-		"AbilityCastPoint"				"0"
-
-		// Time		
-		//-------------------------------------------------------------------------------------------------------------
-		"AbilityCooldown"				"0"
-
-		// Cost
-		//-------------------------------------------------------------------------------------------------------------
-		"AbilityManaCost"				"0"
-
-		// Special
-		"AbilitySpecial"
-		{
-			"01"
-			{
-				"var_type"				"FIELD_FLOAT"
-				"duration"				"9999"
-			}
-			"02"
-			{
-				"var_type"				"FIELD_INTEGER"
-				"damage"				"0"
-			}
-			"03"
-			{
-				"var_type"				"FIELD_INTEGER"
-				"width"					"8064" // this is Bounds.max*2
-			}
-		}
-
-		"OnSpellStart"
-		{
-			"CreateThinker"
-			{
-				"ModifierName"	"dark_seer_wall_of_discord_thinker"
-				"Target"		"POINT"
-			}
-		}
-
-		"Modifiers"
-		{
-			"dark_seer_wall_of_discord_thinker"
-			{
-				"Duration" "%duration"
-				"ThinkInterval" "0.25"
-				"OnIntervalThink"
-				{
-					"ApplyModifier"
-					{
-						"ModifierName"	"modifier_dark_seer_wall_of_discord_target"
-						"Target"
-						{
-							"Center"	"TARGET"
-							"Line"
-							{
-								"Length"	"%width"
-								"Thickness"	"50"
-							}
-							"Teams"		"DOTA_UNIT_TARGET_TEAM_ENEMY"
-							"Types"		"DOTA_UNIT_TARGET_CREEP | DOTA_UNIT_TARGET_HERO"
-						}
-					}
-				}
-
-				"OnCreated"
-				{
-					"AttachEffect"
-					{
-						"Target"			"TARGET"
-						"EffectName"		"particles/units/heroes/hero_dark_seer/dark_seer_wall_of_replica.vpcf"
-						"EffectAttachType"	"start_at_customorigin"
-						"EffectLineTarget"	"TARGET"
-						"EffectLineLength"	"%width"
-					}
-				}
-			}
-			
-			"modifier_dark_seer_wall_of_discord_target"
-			{
-				"Duration" "1" // Encourage you to drag them back and forth through the wall
-				"OnCreated"
-				{
-					"Damage"
-					{
-						"Type"		"DAMAGE_TYPE_MAGICAL"
-						"Damage"	"%damage"
-						"Target"	"TARGET"
-					}
-
-					"AttachEffect"
-					{
-						"Target"			"TARGET"
-						"EffectName"		"particles/units/heroes/hero_dark_seer/dark_seer_wall_of_replica_replicate.vpcf"
-						"EffectAttachType"	"follow_origin"
-					}
-				}
-			}
-		}
-	}
-
-	"dark_seer_wall_of_discord_1"
-	{
-		// General
-		//-------------------------------------------------------------------------------------------------------------
-		"BaseClass"						"ability_datadriven"
-		"AbilityTextureName"			"dark_seer_wall_of_replica"
-		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_POINT"
-		"AbilityUnitDamageType"			"DAMAGE_TYPE_MAGICAL"
-		
-		// Casting
-		//-------------------------------------------------------------------------------------------------------------
-		"AbilityCastRange"				"9000"
-		"AbilityCastPoint"				"0"
-
-		// Time		
-		//-------------------------------------------------------------------------------------------------------------
-		"AbilityCooldown"				"0"
-
-		// Cost
-		//-------------------------------------------------------------------------------------------------------------
-		"AbilityManaCost"				"0"
-
-		// Special
-		"AbilitySpecial"
-		{
-			"01"
-			{
-				"var_type"				"FIELD_FLOAT"
-				"duration"				"9999"
-			}
-			"02"
-			{
-				"var_type"				"FIELD_INTEGER"
-				"damage"				"0"
-			}
-			"03"
-			{
-				"var_type"				"FIELD_INTEGER"
-				"width"					"4032" // this is Bounds.max*2
-			}
-		}
-
-		"OnSpellStart"
-		{
-			"CreateThinker"
-			{
-				"ModifierName"	"dark_seer_wall_of_discord_thinker"
-				"Target"		"POINT"
-			}
-		}
-
-		"Modifiers"
-		{
-			"dark_seer_wall_of_discord_thinker"
-			{
-				"Duration" "%duration"
-				"ThinkInterval" "0.25"
-				"OnIntervalThink"
-				{
-					"ApplyModifier"
-					{
-						"ModifierName"	"modifier_dark_seer_wall_of_discord_target"
-						"Target"
-						{
-							"Center"	"TARGET"
-							"Line"
-							{
-								"Length"	"%width"
-								"Thickness"	"50"
-							}
-							"Teams"		"DOTA_UNIT_TARGET_TEAM_ENEMY"
-							"Types"		"DOTA_UNIT_TARGET_CREEP | DOTA_UNIT_TARGET_HERO"
-						}
-					}
-				}
-
-				"OnCreated"
-				{
-					"AttachEffect"
-					{
-						"Target"			"TARGET"
-						"EffectName"		"particles/units/heroes/hero_dark_seer/dark_seer_wall_of_replica.vpcf"
-						"EffectAttachType"	"start_at_customorigin"
-						"EffectLineTarget"	"TARGET"
-						"EffectLineLength"	"%width"
-					}
-				}
-			}
-			
-			"modifier_dark_seer_wall_of_discord_target"
-			{
-				"Duration" "1" // Encourage you to drag them back and forth through the wall
-				"OnCreated"
-				{
-					"Damage"
-					{
-						"Type"		"DAMAGE_TYPE_MAGICAL"
-						"Damage"	"%damage"
-						"Target"	"TARGET"
-					}
-
-					"AttachEffect"
-					{
-						"Target"			"TARGET"
-						"EffectName"		"particles/units/heroes/hero_dark_seer/dark_seer_wall_of_replica_replicate.vpcf"
-						"EffectAttachType"	"follow_origin"
-					}
 				}
 			}
 		}

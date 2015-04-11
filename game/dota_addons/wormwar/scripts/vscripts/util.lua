@@ -1,5 +1,9 @@
 -- GREAT UTILITY FUNCTIONS
 
+function VectorDistanceSq(v1, v2) 
+    return (v1.x - v2.x) * (v1.x - v2.x) + (v1.y - v2.y) * (v1.y - v2.y)
+end
+
 function EntityIterator(callback)
 	local ent = Entities:First()
 	while (ent) do
@@ -181,6 +185,8 @@ function ColorIt( sStr, sColor )
 		color = "EE82EE"
 	elseif sColor == "blue" then
 		color = "00BFFF"
+	elseif sColor == "real_blue" then
+		color = "0000FF"
 	elseif sColor == "orange" then
 		color = "FFA500"
 	elseif sColor == "pink" then

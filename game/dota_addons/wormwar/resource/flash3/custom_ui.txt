@@ -12,13 +12,13 @@
     }
     "3"
     {
-        "File" "LoadHelper"
-        "Depth" "2"
+        "File" "StatsCollectionHighscores"
+        "Depth" "3"
     }
     "4"
     {
-        "File" "StatsCollectionHighscores"
-        "Depth" "3"
+        "File" "ConsoleCommands"
+        "Depth" "4"
     }
 }
 

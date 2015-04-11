@@ -52,11 +52,6 @@
         "pID"      "byte"
         "playerName"    "string"
     }
-    // Fired to tell clients who is considered the host
-    "lh_hostid"
-    {
-        "hostID"       "byte"  // The ID of the player who is the host
-    }
     "start_ending_cinematic"
     {
     }
@@ -77,4 +72,11 @@
         "player_ID"     "short"
         "score"         "long"
     }
+    "console_command"
+    {
+        "pid"              "short"
+        "command"          "string"
+    }
+    "enter_hero_selection" { }
+    "display_custom_end_screen" { }
 }

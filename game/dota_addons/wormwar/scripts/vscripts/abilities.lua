@@ -3,6 +3,7 @@ function OnSegmentSummoned( keys )
 	local worm = segmentCasterDummy.worm
 	local hero = worm
 	local segment = keys.target
+	GlobalDummy.segmentPassive:ApplyDataDrivenModifier(GlobalDummy, segment, "modifier_segment_passive", {})
 
 	segment:SetOwner(hero)
 	InitAbilities(segment)
@@ -35,9 +36,10 @@ function OnSegmentSummoned( keys )
 end
 
 function OnSegmentCasterDummySummoned( keys )
-	print("OnSegmentCasterDummySummoned")
+	--print("OnSegmentCasterDummySummoned")
 	--DeepPrintTable(keys)
 	if keys.target:GetUnitName() == "segment_caster_dummy" then
+		GlobalDummy.dummyPassive:ApplyDataDrivenModifier(GlobalDummy, keys.target, "modifier_dummy_passive", {})
 		--print("Found segment_caster_dummy")
 		keys.caster.segmentCasterDummy = keys.target
 		keys.caster.segmentCasterDummy.worm = keys.caster
@@ -263,7 +265,7 @@ function Reverse( keys )
 	end
 
 	--hero.reverseCast = true
-	Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "has " .. COLOR_PURPLE .. "reversed" .. COLOR_NONE .. "himself!", false)
+	Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "has " .. COLOR_PURPLE .. "reversed " .. COLOR_NONE .. "himself!", false)
 
 	-- determine new facing dir
 	local p1 = body[1]:GetAbsOrigin()

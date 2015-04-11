@@ -5,12 +5,15 @@ BASE_MODULES = {
 	'lib.statcollection',
 	'abilities',
 	'popups',
-	'loadhelper',
+	'consolecommands',
+	'wormai',
 	'wormwar',
 }
 
 function Precache( context )
 	print("[WORMWAR] Performing pre-load precache")
+
+	PrecacheUnitByNameSync("npc_dota_hero_nyx_assassin", context)
 
 	-- Particles can be precached individually or by folder
 	-- It it likely that precaching a single particle system will precache all of its children, but this may not be guaranteed
@@ -96,6 +99,8 @@ function Precache( context )
 	PrecacheModel("models/props_wildlife/wildlife_millipede001.vmdl", context)
 	--models/heroes/weaver/weaver_beetle.vmdl
 	PrecacheModel("models/heroes/weaver/weaver_beetle.vmdl", context)
+	--models/items/courier/scribbinsthescarab/scribbinsthescarab.vmdl
+	PrecacheModel("models/items/courier/scribbinsthescarab/scribbinsthescarab.vmdl", context)
 
 	-- Sounds can precached here like anything else
 	PrecacheResource("soundfile", "soundevents/game_sounds_heroes/game_sounds_gyrocopter.vsndevts", context)
@@ -121,9 +126,6 @@ function Precache( context )
 
 	-- Entire heroes (sound effects/voice/models/particles) can be precached with PrecacheUnitByNameSync
 	-- Custom units from npc_units_custom.txt can also have all of their abilities and precache{} blocks precached in this way
-
-	PrecacheUnitByNameSync("npc_dota_hero_nyx_assassin", context)
-	PrecacheUnitByNameSync("npc_dota_hero_razor", context)
 end
 
 --MODULE LOADER STUFF by Adynathos
