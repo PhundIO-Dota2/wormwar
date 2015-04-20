@@ -311,7 +311,7 @@ function WormWar:OnWormInGame(hero)
 			local dir = sub:Normalized()
 			local distSq = VectorDistanceSq(p1, p2)
 			--local newPos = p1 + dir*210
-			if distSq > 130*130 then
+			if distSq > 110*110 then
 				segment:SetForwardVector(dir)
 				segment:SetPhysicsVelocity(hero:GetBaseMoveSpeed()*dir)
 			else
@@ -497,13 +497,14 @@ function WormWar:OnWormInGame(hero)
 
 	    InitAbilities(hero)
 	    Timers:CreateTimer(.06, function()
-	    	hero:CastAbilityNoTarget(hero:FindAbilityByName("summon_segment_caster_dummy"), 0)
-	    	Timers:CreateTimer(.06, function()
-	    		AddSegments(hero, 1)
-				-- Store this hero handle in this table.
-				table.insert(WormWar.vHeroes, hero)
-	    	end)
-	    end)
+    		hero:CastAbilityNoTarget(hero:FindAbilityByName("summon_segment_caster_dummy"), 0)
+    	end)
+    	Timers:CreateTimer(.3, function()
+    		--print("add segment.")
+    		AddSegments(hero, 1)
+			-- Store this hero handle in this table.
+			table.insert(WormWar.vHeroes, hero)
+    	end)
 		ply.firstTime = true
 	end
 end
@@ -624,7 +625,7 @@ function AddSegments( hero, foodAmount )
 		--models/props_wildlife/wildlife_hercules_beetle001.vmdl
 		-- rememeber: head of the body == hero, is at the end of the hero.body table.
 		local lastSegment = hero.body[1]
-		local pos = lastSegment:GetAbsOrigin() + lastSegment:GetForwardVector()*-90
+		local pos = lastSegment:GetAbsOrigin() + lastSegment:GetForwardVector()*-80
 		if hero.segmentCasterDummy == nil then print("segmentCasterDummy nil.") end
 		ExecuteOrderFromTable({ UnitIndex = hero.segmentCasterDummy:GetEntityIndex(),
 			OrderType = DOTA_UNIT_ORDER_CAST_POSITION,
@@ -1527,11 +1528,11 @@ function WormWar:InitMap(  )
 		SEGMENTS_TO_WIN = 60
 	elseif PlayerCount <= 9 then
 		Bounds = {max = 5048}
-		NumUnits = 90
+		NumUnits = 80
 		SEGMENTS_TO_WIN = 70
 	elseif PlayerCount <= 12 then
 		Bounds = {max = 7064} --8064
-		NumUnits = 100
+		NumUnits = 105
 		SEGMENTS_TO_WIN = 70
 	end
 	if Testing then
@@ -1785,6 +1786,9 @@ function WormWar:InitSinglePlayerMode(  )
 			else -- spawn 5 enemy nyx's.
 				--print("spawning nyx.")
 				SendToConsole("dota_create_unit npc_dota_hero_nyx_assassin enemy")
+				if i == 9 then
+					DontDisableCheats = false
+				end
 			end
 		end)
 	end
@@ -1827,5 +1831,4 @@ function WormWar:InitSinglePlayerMode(  )
 			end
 		end
 	end)]]
-	DontDisableCheats = false
 end
