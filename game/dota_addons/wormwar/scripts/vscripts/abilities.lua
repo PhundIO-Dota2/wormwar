@@ -28,9 +28,8 @@ function OnSegmentSummoned( keys )
 		hero.almostWon = true
 		local pos = hero:GetAbsOrigin()
 		--ShowCenterMsg(hero.playerName .. " needs only 10 segments to win!", 2)
-		Say(nil, hero.colHex .. hero.playerName .. COLOR_NONE .. "only needs " .. COLOR_LGREEN .. "10 segments to win! " ..
-			COLOR_RED .. "SQUISH HIM!!", false)
-
+		--Say(nil, hero.colHex .. hero.playerName .. COLOR_NONE .. "only needs " .. COLOR_LGREEN .. "10 segments to win! " .. COLOR_RED .. "SQUISH HIM!!" .. COLOR_NONE, false)
+		Say(nil, hero.playerName .. " only needs " .. COLOR_LGREEN .. "10 segments to win! " .. COLOR_RED .. "SQUISH HIM!!" .. COLOR_NONE, false)
 	end
 
 end
@@ -39,10 +38,13 @@ function OnSegmentCasterDummySummoned( keys )
 	--print("OnSegmentCasterDummySummoned")
 	--DeepPrintTable(keys)
 	if keys.target:GetUnitName() == "segment_caster_dummy" then
-		GlobalDummy.dummyPassive:ApplyDataDrivenModifier(GlobalDummy, keys.target, "modifier_dummy_passive", {})
 		--print("Found segment_caster_dummy")
+		keys.target.makesWormDie = false
+		keys.target.isSegment = false
+		keys.target.worm = keys.caster
 		keys.caster.segmentCasterDummy = keys.target
-		keys.caster.segmentCasterDummy.worm = keys.caster
+		print("P" .. keys.caster:GetPlayerID() .. "OnSegmentCasterDummySummoned")
+		GlobalDummy.dummyPassive:ApplyDataDrivenModifier(GlobalDummy, keys.target, "modifier_dummy_passive", {})
 	end
 end
 
@@ -65,7 +67,8 @@ function Goo_Bomb( keys )
 
 	EmitGlobalSound("Hero_Treant.Overgrowth.Cast")
 
-	Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "casted a " .. COLOR_GREEN .. "Goo Bomb!", false)
+	--Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "casted a " .. COLOR_GREEN .. "Goo Bomb!" .. COLOR_NONE, false)
+	Say(nil, caster.playerName .. COLOR_NONE .. "casted a " .. COLOR_GREEN .. "Goo Bomb!" .. COLOR_NONE, false)
 
 	for _,hero in pairs(WormWar.vHeroes) do
 		if hero ~= caster then
@@ -94,7 +97,8 @@ function Fiery_Jaw( keys )
 	local duration = ability:GetSpecialValueFor("duration")
 	--print("Fiery_Jaw casted by P" .. caster:GetPlayerID())
 
-	Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "activated " .. COLOR_GOLD .. "Fiery Jaw!", false)
+	--Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "activated " .. COLOR_GOLD .. "Fiery Jaw!" .. COLOR_NONE, false)
+	Say(nil, caster.playerName .. " activated " .. COLOR_GOLD .. "Fiery Jaw!" .. COLOR_NONE, false)
 
 	-- play effects
 	if not hero.fieryJawParticle then
@@ -130,7 +134,8 @@ function Segment_Bomb( keys )
 	local caster = keys.caster
 	local ability = keys.ability
 
-	Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "casted a " .. COLOR_RED .. "Segment Bomb!", false)
+	--Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "casted a " .. COLOR_RED .. "Segment Bomb!" .. COLOR_NONE, false)
+	Say(nil, caster.playerName .. " casted a" .. COLOR_RED .. "Segment Bomb!" .. COLOR_NONE, false)
 
 	-- play cast sound
 	--caster:EmitSound("Hero_Tinker.Heat-Seeking_Missile")
@@ -168,7 +173,8 @@ function Crypt_Craving( keys )
 	--print("Crypt_Craving casted by P" .. caster:GetPlayerID())
 	hero.playCryptDeath = false
 
-	Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "casted " .. COLOR_SPINK .. "Crypt Craving!", false)
+	--Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "casted " .. COLOR_SPINK .. "Crypt Craving!" .. COLOR_NONE, false)
+	Say(nil, caster.playerName .. " casted " .. COLOR_SPINK .. "Crypt Craving!" .. COLOR_NONE, false)
 
 	local foodEnts = {}
 	for _,ent in ipairs(Entities:FindAllInSphere(caster:GetAbsOrigin(), radius)) do
@@ -265,7 +271,8 @@ function Reverse( keys )
 	end
 
 	--hero.reverseCast = true
-	Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "has " .. COLOR_PURPLE .. "reversed " .. COLOR_NONE .. "himself!", false)
+	--Say(nil, caster.colHex .. caster.playerName .. COLOR_NONE .. "has " .. COLOR_PURPLE .. "reversed " .. COLOR_NONE .. "himself!", false)
+	Say(nil, caster.playerName .. " has " .. COLOR_PURPLE .. "reversed " .. COLOR_NONE .. "himself!", false)
 
 	-- determine new facing dir
 	local p1 = body[1]:GetAbsOrigin()

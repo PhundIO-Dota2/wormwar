@@ -1,7 +1,7 @@
 print ('[WORMWAR] wormwar.lua' )
 
 NEXT_FRAME = .01
-Testing = false
+Testing = true
 
 TestMoreAbilities = false
 OutOfWorldVector = Vector(5000, 5000, -200)
@@ -496,14 +496,13 @@ function WormWar:OnWormInGame(hero)
 		--ParticleManager:SetParticleControlEnt(spikeParticle, 1, hero, 1, "follow_origin", hero:GetAbsOrigin(), true)
 
 	    InitAbilities(hero)
-	    Timers:CreateTimer(.06, function()
+	    Timers:CreateTimer(.09, function()
+	    	print("P" .. hero:GetPlayerID() .. " summon_segment_caster_dummy")
     		hero:CastAbilityNoTarget(hero:FindAbilityByName("summon_segment_caster_dummy"), 0)
-    	end)
-    	Timers:CreateTimer(.3, function()
-    		--print("add segment.")
-    		AddSegments(hero, 1)
-			-- Store this hero handle in this table.
-			table.insert(WormWar.vHeroes, hero)
+    		Timers:CreateTimer(.03, function()
+	    		AddSegments(hero, 1)
+				table.insert(WormWar.vHeroes, hero)
+			end)
     	end)
 		ply.firstTime = true
 	end
@@ -1519,19 +1518,20 @@ function WormWar:InitMap(  )
 	-- determine the bounds for the map
 	--if Testing then PlayerCount = 6 end
 	NumUnits = 30
+	local mapSize = PlayerCount*600
 	if PlayerCount <= 3 then
-		Bounds = {max = 3016}
+		Bounds = {max = mapSize}
 		SEGMENTS_TO_WIN = 40
 	elseif PlayerCount <= 6 then
-		Bounds = {max = 4032}
+		Bounds = {max = mapSize}
 		NumUnits = 60
 		SEGMENTS_TO_WIN = 60
 	elseif PlayerCount <= 9 then
-		Bounds = {max = 5048}
+		Bounds = {max = mapSize}
 		NumUnits = 80
 		SEGMENTS_TO_WIN = 70
 	elseif PlayerCount <= 12 then
-		Bounds = {max = 7064} --8064
+		Bounds = {max = mapSize} --8064
 		NumUnits = 105
 		SEGMENTS_TO_WIN = 70
 	end
@@ -1628,7 +1628,7 @@ function WormWar:InitMap(  )
 	end
 
 	if not InitialHeroSpawn then
-		Timers:CreateTimer(.5, function()
+		Timers:CreateTimer(1, function()
 			for i,ent in ipairs(Entities:FindAllByClassname("info_player_start_*")) do
 				local pos = FindGoodPosition("info_player_start")
 				ent:SetAbsOrigin(pos)

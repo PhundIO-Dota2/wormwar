@@ -26,6 +26,9 @@ function WormBot:Init(worm)
 			end
 		end
 		if worm.nextMovePos then
+			if worm:GetPlayerID() == 1 then
+				print("worm.nextMovePos")
+			end
 			ExecuteOrderFromTable({ UnitIndex = worm:GetEntityIndex(), OrderType = DOTA_UNIT_ORDER_MOVE_TO_POSITION, 
 				Position = worm.nextMovePos, Queue = false})
 		end
